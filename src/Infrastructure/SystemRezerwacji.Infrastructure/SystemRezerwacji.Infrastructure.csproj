@@ -17,9 +17,14 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Core\SystemRezerwacji.Application\SystemRezerwacji.Application.csproj" />
       <ProjectReference Include="..\..\Core\SystemRezerwacji.Domain\SystemRezerwacji.Domain.csproj" />
-      <ProjectReference Include="..\SystemRezerwacji.Application\SystemRezerwacji.Application.csproj" />
-      <ProjectReference Include="..\SystemRezerwacji.Domain\SystemRezerwacji.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.Extensions.Configuration">
+        <HintPath>..\..\..\..\..\..\.nuget\packages\microsoft.extensions.configuration\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>
