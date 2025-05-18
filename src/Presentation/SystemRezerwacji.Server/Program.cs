@@ -13,7 +13,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
+
 
 // --- POCZĄTEK KONFIGURACJI BAZY DANYCH I IDENTITY ---
 
@@ -44,6 +44,8 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
     .AddDefaultTokenProviders(); // Dla generowania tokenów (np. reset hasła)
 
 // --- KONIEC KONFIGURACJI BAZY DANYCH I IDENTITY ---
+
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
