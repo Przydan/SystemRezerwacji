@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "SystemRezerwacji.Server\\SystemRezerwacji.Server.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "SystemRezerwacji.ClientApp\\SystemRezerwacji.ClientApp.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
