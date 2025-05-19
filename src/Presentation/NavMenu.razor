@@ -1,0 +1,38 @@
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Authorization <MudNavMenu> <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Strona Główna</MudNavLink>
+
+    <AuthorizeView>
+        <Authorized>
+            <MudNavLink Href="moje-rezerwacje" Icon="@Icons.Material.Filled.BookOnline">Moje Rezerwacje</MudNavLink>
+            <MudText Typo="Typo.body2" Class="px-4 py-2">Witaj, @context.User.Identity?.Name</MudText>
+            <MudNavLink @onclick="Logout" Icon="@Icons.Material.Filled.Logout">Wyloguj</MudNavLink>
+        </Authorized>
+        <NotAuthorized>
+            <MudNavLink Href="login" Icon="@Icons.Material.Filled.Login">Zaloguj</MudNavLink>
+            <MudNavLink Href="register" Icon="@Icons.Material.Filled.PersonAdd">Zarejestruj</MudNavLink>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudNavMenu>
+
+@code {
+    // Dla Bootstrap
+    private bool collapseNavMenu = true;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    // Wspólne dla obu podejść (Logout)
+    // Tutaj będziesz potrzebować implementacji serwisu AuthService
+    // @inject IAuthService AuthService 
+    private async Task Logout()
+    {
+        // await AuthService.Logout();
+        // NavigationManager.NavigateTo("/"); 
+        // Na razie zakomentowane, do zaimplementowania w dalszych krokach
+        Console.WriteLine("Logout clicked - implementacja w AuthService");
+        NavigationManager.NavigateTo("/login", forceLoad: true); // Tymczasowe przekierowanie
+    }
+}
