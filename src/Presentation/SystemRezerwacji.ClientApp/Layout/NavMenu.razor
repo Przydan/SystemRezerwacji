@@ -1,8 +1,4 @@
-﻿@inject NavigationManager NavigationManager
-@inject IAuthService AuthService 
-@using Microsoft.AspNetCore.Components.Authorization
-
-<div class="top-row ps-3 navbar navbar-dark">
+﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">SystemRezerwacji.ClientApp</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -39,12 +35,6 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
-    }
-
-    private async Task Logout()
-    {
-        await AuthService.Logout();
-        NavigationManager.NavigateTo("/login", forceLoad: true); // forceLoad, aby odświeżyć stan
     }
 
 }
