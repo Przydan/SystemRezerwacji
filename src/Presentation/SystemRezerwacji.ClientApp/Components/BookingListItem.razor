@@ -1,0 +1,36 @@
+﻿@using MudBlazor
+@using SystemRezerwacji.ClientApp.Models
+@using Microsoft.AspNetCore.Components
+
+<MudCard class="mb-3" Elevation="1">
+    <MudCardContent>
+        <div><strong>Zasób:</strong> @Booking.ResourceName</div>
+        <div><strong>Od:</strong> @Booking.StartTime.ToString("g")</div>
+        <div><strong>Do:</strong> @Booking.EndTime.ToString("g")</div>
+        <div>
+            <strong>Status:</strong> @Booking.Status
+            @if (Booking.Status != "Cancelled")
+            {
+                <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="@Cancel" class="ms-2">
+                    Anuluj
+                </MudButton>
+            }
+        </div>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public BookingDto Booking { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<Guid> OnCancel { get; set; }
+
+    private async Task Cancel()
+    {
+        if (OnCancel.HasDelegate)
+        {
+            await OnCancel.InvokeAsync(Booking.Id);
+        }
+    }
+}
