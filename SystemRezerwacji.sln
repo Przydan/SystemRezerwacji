@@ -10,11 +10,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{0A89D3BA-E12E-4AC4-98EF-32FCC23C3B5A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentation", "{AD6E2D8E-8A7D-45FA-BB82-CEFB463A882F}"
+	ProjectSection(SolutionItems) = preProject
+		src\Presentation\NavMenu.razor = src\Presentation\NavMenu.razor
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{60F8C7F7-DAD5-40E2-8F91-143A52EDB50C}"
-	ProjectSection(SolutionItems) = preProject
-		NavMenu.razor = NavMenu.razor
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemRezerwacji.Application", "src\Core\SystemRezerwacji.Application\SystemRezerwacji.Application.csproj", "{8D74009D-9833-419A-9F65-33B3AE8B04E5}"
 EndProject
