@@ -45,6 +45,10 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 
 // --- KONIEC KONFIGURACJI BAZY DANYCH I IDENTITY ---
 
+builder.Services.AddScoped<IResourceTypeRepository, ResourceTypeRepository>();
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetAllResourceTypesQuery).Assembly));
+builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
