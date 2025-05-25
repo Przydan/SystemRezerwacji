@@ -10,4 +10,10 @@
       <ProjectReference Include="..\SystemRezerwacji.Domain\SystemRezerwacji.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="FluentAssertions" Version="8.2.0" />
+      <PackageReference Include="MediatR" Version="12.5.0" />
+      <PackageReference Include="Moq" Version="4.20.72" />
+    </ItemGroup>
+
 </Project>
