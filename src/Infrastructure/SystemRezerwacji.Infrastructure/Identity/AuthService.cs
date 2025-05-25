@@ -130,4 +130,9 @@ public class AuthService : IAuthService
             Roles = userRoles.ToList()
         };
     }
+
+    public Task Logout()
+    {
+        throw new NotImplementedException();
+    }
 }
