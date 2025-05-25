@@ -1,7 +1,16 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using SystemRezerwacji.Infrastructure.Persistence.DbContext; // Ścieżka do Twojego DbContext
 using SystemRezerwacji.Domain.Entities; // Dla User
-using Microsoft.AspNetCore.Identity; // Dla IdentityRole i AddIdentity
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using SystemRezerwacji.Application.Features.ResourceType.Queries.GetAllResourceTypes;
+using SystemRezerwacji.Application.Interfaces.Identity;
+using SystemRezerwacji.Application.Interfaces.Persistence;
+using SystemRezerwacji.Application.Services;
+using SystemRezerwacji.Infrastructure.Persistence.Repositories;
+using SystemRezerwacji.Infrastructure.Persistence.Seed; // Dla IdentityRole i AddIdentity
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -45,6 +54,40 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 
 // --- KONIEC KONFIGURACJI BAZY DANYCH I IDENTITY ---
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.SaveToken = true; // Opcjonalnie, jeśli token ma być dostępny w HttpContext
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment(); // W dev może być false, w prod true
+    options.TokenValidationParameters = new TokenValidationParameters()
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]
+                                                                           ?? throw new InvalidOperationException("JWT Key not configured in JwtSettings:Key."))),
+        ClockSkew = TimeSpan.Zero // Brak tolerancji dla wygaśnięcia tokenu (zalecane)
+    };
+});
+
+// Dodanie polityk autoryzacji (na razie jedna przykładowa)
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdministratorRole", policy => policy.RequireRole("Administrator"));
+    // Tutaj można dodawać inne polityki w przyszłości, np. "RequireUserRole"
+});
+
+// Rejestracja IAuthService (dodasz ją w kolejnym podpunkcie)
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+
 builder.Services.AddScoped<IResourceTypeRepository, ResourceTypeRepository>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetAllResourceTypesQuery).Assembly));
 builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
@@ -56,6 +99,24 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    
+    // Seedowanie danych przy starcie aplikacji (tylko w Development)
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<SystemRezerwacjiDbContext>();
+        // Upewnij się, że baza danych jest utworzona i migracje są zastosowane
+        await context.Database.MigrateAsync();
+
+        // Wywołanie seedera dla ról i użytkownika admina
+        await IdentityDataSeeder.SeedRolesAndAdminUserAsync(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
 }
 
 app.UseHttpsRedirection();
