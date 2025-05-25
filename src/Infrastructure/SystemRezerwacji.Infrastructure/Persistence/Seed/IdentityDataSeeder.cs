@@ -36,7 +36,7 @@ namespace SystemRezerwacji.Infrastructure.Persistence.Seed;
 
                 // Tworzenie domyślnego użytkownika-administratora
                 // Upewnij się, że email jest unikalny i hasło spełnia wymagania polityki Identity
-                var adminEmail = "admin@systemrezerwacji.local"; // Zmień na odpowiedni
+                var adminEmail = "admin@systemrezerwacji.local.com"; // Zmień na odpowiedni
                 var adminPassword = "AdminPassword123!"; // ZMIEŃ NA SILNE HASŁO W PRODUKCJI!
 
                 var adminUser = await userManager.FindByEmailAsync(adminEmail);
