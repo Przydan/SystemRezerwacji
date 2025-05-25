@@ -1,0 +1,34 @@
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication // Potrzebne dla NavigateToLogout
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView>
+    <Authorized>
+        <div class="user-auth-greet">
+            Witaj, @(string.IsNullOrWhiteSpace(context.User.Identity?.Name) ? "Użytkowniku" : context.User.Identity.Name)!
+        </div>
+        <button class="nav-link btn btn-link layout-button" @onclick="BeginSignOut">
+            <span class="oi oi-account-logout" aria-hidden="true"></span> Wyloguj
+        </button>
+    </Authorized>
+    <NotAuthorized>
+        <div class="auth-links">
+            <a href="authentication/register" class="register-link">Zarejestruj</a>
+            <a href="authentication/login" class="login-link">Zaloguj</a>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private async Task BeginSignOut(MouseEventArgs args)
+    {
+        // Użyj rozszerzenia NavigateToLogout z NavigationManager
+        // Pierwszy argument to ścieżka wylogowania skonfigurowana w AddApiAuthorization (domyślnie "authentication/logout")
+        // Drugi argument to opcje, np. returnUrl.
+        // W Twoim przypadku AuthController nie obsługuje wylogowania JWT bezpośrednio,
+        // więc to przekierowanie ma na celu głównie wyczyszczenie stanu po stronie klienta
+        // i usunięcie tokenu z magazynu (co robią mechanizmy Blazorowe).
+        NavigationManager.NavigateToLogout("authentication/logout"); 
+        await Task.CompletedTask; // NavigateToLogout jest synchroniczne pod względem nawigacji
+    }
+}

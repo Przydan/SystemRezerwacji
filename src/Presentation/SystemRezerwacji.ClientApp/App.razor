@@ -1,12 +1,49 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
-        <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
-    </Found>
-    <NotFound>
-        <PageTitle>Not found</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using SystemRezerwacji.ClientApp.Shared 
+@using MainLayout = SystemRezerwacji.ClientApp.Shared.MainLayout
+@using SystemRezerwacji.ClientApp.Shared
+@* Zakładając, że RedirectToLogin jest w Shared *@
+@* @using SystemRezerwacji.ClientApp.Components Zakładając, że LoadingProvider i NotFoundView są w Components *@
+@* @using Inna.Przestrzen.Nazw.Dla.LoadingProvider Jeśli z biblioteki *@
+@* @using Inna.Przestrzen.Nazw.Dla.NotFoundView Jeśli z biblioteki *@
+
+<CascadingAuthenticationState>
+    @* Jeśli LoadingProvider to Twój komponent lub z biblioteki, upewnij się, że @using jest poprawny *@
+    <LoadingProvider> 
+        <Router AppAssembly="@typeof(App).Assembly">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <Authorizing>
+                        <p>@AuthorizingMessage</p> @* POPRAWKA *@
+                    </Authorizing>
+                    <NotAuthorized>
+                        @* Upewnij się, że RedirectToLogin jest poprawnie rozpoznawany po dodaniu @using *@
+                        @if (context.User.Identity?.IsAuthenticated == false) // Dodatkowe sprawdzenie, czy na pewno jest nieautoryzowany
+                        {
+                            <RedirectToLogin />
+                        }
+                        else // Jeśli jest autoryzowany, ale nie ma dostępu (np. brak roli)
+                        {
+                             <p>Nie masz uprawnień, aby zobaczyć tę zawartość.</p>
+                        }
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </Found>
+            <NotFound>
+                <LayoutView Layout="@typeof(MainLayout)"> @* Dodanie LayoutView dla spójności *@
+                    @* Upewnij się, że NotFoundView jest poprawnie rozpoznawany po dodaniu @using *@
+                    <PageTitle>@NotFoundTitle</PageTitle>
+                    <p role="alert">@NotFoundMessage</p>
+                    @* Możesz użyć <NotFoundView /> jeśli jest to Twój bardziej rozbudowany komponent *@
+                </LayoutView>
+            </NotFound>
+        </Router>
+    </LoadingProvider>
+</CascadingAuthenticationState>
+
+@code {
+    public const string NotFoundTitle = "Nie znaleziono";
+    public const string NotFoundMessage = "Przepraszamy, nic tu nie ma.";
+    public const string AuthorizingMessage = "Autoryzacja w toku...";
+}

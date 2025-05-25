@@ -1,9 +1,8 @@
 @namespace SystemRezerwacji.ClientApp.Pages.Admin
 @page "/admin/resources"
+@using ResourceTypeDto = SystemRezerwacji.Application.DTOs.ResourceType.ResourceTypeDto
 @attribute [Authorize(Roles = "Administrator")]
-@using MudBlazor
-@using MudBlazor.Services
-@using SystemRezerwacji.ClientApp.Models
+
 @inject ResourceClientService ResourceService
 @inject IDialogService DialogService
 
@@ -30,7 +29,7 @@
                   AdornmentIcon="@Icons.Material.Filled.Search"
                   Clearable="true" />
 
-    <MudSelect T="int?"
+    <MudSelect T="Guid?"
                @bind-Value="selectedTypeId"
                Placeholder="Typ zasobu"
                Clearable="true">
@@ -83,10 +82,10 @@
 }
 
 @code {
-  private List<ResourceDto> Resources = new();
-  private List<ResourceTypeDto> ResourceTypes = new();
+  private List<ResourceDto>? Resources = new();
+  private List<Models.ResourceTypeDto>? ResourceTypes = new();
   private string filterName = string.Empty;
-  private int? selectedTypeId = null;
+  private Guid? selectedTypeId = null;
   private bool onlyActive = false;
 
   private ResourceDto selectedResource = new();
