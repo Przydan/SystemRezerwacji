@@ -9,4 +9,5 @@ public interface IAuthService
     // W przyszłości można dodać:
     // Task<AuthResponseDto> RefreshTokenAsync(string token);
     // Task LogoutAsync(string userId);
+    Task Logout();
 }
