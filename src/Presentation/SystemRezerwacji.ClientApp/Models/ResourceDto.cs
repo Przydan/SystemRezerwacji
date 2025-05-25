@@ -14,7 +14,7 @@ public class ResourceDto
     public int Capacity { get; set; }
 
     [Required(ErrorMessage = "Typ zasobu jest wymagany")]
-    public int ResourceTypeId { get; set; }
+    public Guid ResourceTypeId { get; set; }
 
     // opcjonalnie do wyświetlania w tabeli
     public string ResourceTypeName { get; set; }

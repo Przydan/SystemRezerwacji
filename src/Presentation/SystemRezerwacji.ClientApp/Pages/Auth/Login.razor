@@ -1,0 +1,145 @@
+@page "/login"
+@page "/authentication/login" 
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+// Standardowa ścieżka używana przez Blazor
+@inject IAuthClientService AuthService
+@inject NavigationManager NavigationManager
+@inject SignOutSessionStateManager SignOutManager 
+
+<h3>Logowanie</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<EditForm Model="@loginRequestModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
+        <InputText id="email" class="form-control" @bind-Value="loginRequestModel.Email" />
+        <ValidationMessage For="@(() => loginRequestModel.Email)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="password" class="form-label">Hasło:</label>
+        <InputText id="password" type="password" class="form-control" @bind-Value="loginRequestModel.Password" />
+        <ValidationMessage For="@(() => loginRequestModel.Password)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+        @if (isSubmitting)
+        {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span> Logowanie...</span>
+        }
+        else
+        {
+            <span>Zaloguj</span>
+        }
+    </button>
+    <NavLink href="register" class="btn btn-link">Nie masz konta? Zarejestruj się</NavLink>
+</EditForm>
+
+@code {
+    private LoginRequest loginRequestModel = new LoginRequest();
+    private string? errorMessage;
+    private bool isSubmitting = false;
+
+    // Ta metoda jest wywoływana przez `AddApiAuthorization` po powrocie z serwera Identity
+    // Tutaj `action` to `login-callback` lub `login-failed`
+    [Parameter] public string? Action { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Jeśli `Action` to `login-failed`, oznacza to błąd podczas interakcji z Identity Server (np. OIDC)
+        // W naszym przypadku bezpośredniego logowania JWT, ta logika może być inna.
+        // `AddApiAuthorization` może próbować przekierować tutaj po nieudanej próbie uzyskania tokenu.
+        if (Action == "login-failed")
+        {
+            var uri = new Uri(NavigationManager.Uri);
+            if (uri.Query.Contains("message")) // Standardowo `AddApiAuthorization` przekazuje błąd w query string
+            {
+                errorMessage = System.Net.WebUtility.UrlDecode(uri.Query.Split("message=")[1]);
+            }
+            else
+            {
+                 errorMessage = "Wystąpił błąd podczas próby logowania.";
+            }
+        }
+        // Możesz dodać logikę do czyszczenia stanu, jeśli użytkownik został wylogowany
+        //var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        //if(user?.Identity?.IsAuthenticated == false && await SignOutManager.IsSignedOut())
+        //{
+        //    // Użytkownik został pomyślnie wylogowany
+        //}
+    }
+
+
+    private async Task HandleLogin()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            // Wywołanie serwisu klienta
+            var result = await AuthService.LoginAsync(loginRequestModel);
+
+            if (result != null && result.IsSuccess && !string.IsNullOrEmpty(result.Token))
+            {
+                // `AddApiAuthorization` automatycznie zajmie się tokenem, jeśli jest on zwracany
+                // w odpowiednim formacie przez endpoint /connect/token (standard OIDC).
+                // W przypadku bezpośredniego logowania JWT, `AccessTokenProvider` powinien być
+                // powiadomiony o nowym tokenie. `PersistentComponentState` może tu pomóc.
+                // Jednak `BaseAddressAuthorizationMessageHandler` i `AccessTokenProvider`
+                // są zaprojektowane do pracy z tokenami zarządzanymi przez infrastrukturę Blazor.
+
+                // Po pomyślnym logowaniu przez API i otrzymaniu tokenu,
+                // Blazorowe mechanizmy (`AddApiAuthorization`) powinny go przechwycić i zapisać.
+                // Zazwyczaj `LoginAsync` nie zwraca tokenu bezpośrednio do UI,
+                // a proces logowania kończy się przekierowaniem.
+
+                // W przypadku bezpośredniego zarządzania tokenem (mniej typowe z `AddApiAuthorization`):
+                // await localStorage.SetItemAsync("authToken", result.Token);
+                // (await AuthenticationStateProvider as CustomAuthenticationStateProvider)?.NotifyUserAuthentication(result.Token);
+
+                // Najprościej jest, jeśli API po udanym logowaniu (kontroler AuthController)
+                // po prostu zwraca 200 OK, a token jest ustawiany przez `AuthorizationMessageHandler`.
+                // Jeśli `AddApiAuthorization` jest używane z ASP.NET Core Identity,
+                // proces logowania często obejmuje przekierowania do endpointów Identity Server.
+
+                // Dla standalone Blazor WASM z JWT z API, musimy zapewnić,
+                // że AuthenticationStateProvider jest aktualizowany.
+                // Jeśli używamy `AddApiAuthorization()`, oczekuje ono endpointu zgodnego z OIDC.
+                // Jeśli masz własny AuthController zwracający JWT, musisz mieć niestandardowy
+                // AuthenticationStateProvider lub mechanizm, który przechowa token i zaktualizuje stan.
+
+                // Zakładając, że token jest obsługiwany przez `BaseAddressAuthorizationMessageHandler`
+                // i `AccessTokenProvider` (które są częścią `AddApiAuthorization`),
+                // wystarczy przekierować.
+                NavigationManager.NavigateTo("/", forceLoad: true); // Przekieruj na stronę główną, forceLoad odświeży stan
+            }
+            else
+            {
+                errorMessage = result?.Message ?? "Logowanie nie powiodło się.";
+            }
+        }
+        catch (AccessTokenNotAvailableException exception) // Błąd od `BaseAddressAuthorizationMessageHandler`
+        {
+             // Przekieruj do logowania, jeśli token nie jest dostępny (np. wygasł, użytkownik nie jest zalogowany)
+            exception.Redirect();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Wystąpił nieoczekiwany błąd: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

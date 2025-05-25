@@ -1,7 +1,5 @@
+@using ResourceTypeDto = SystemRezerwacji.Application.DTOs.ResourceType.ResourceTypeDto
 @namespace SystemRezerwacji.ClientApp.Components
-@using MudBlazor
-@using Microsoft.AspNetCore.Components.Forms
-@using SystemRezerwacji.ClientApp.Models
 @inject ResourceClientService ResourceService
 
 <EditForm Model="Model" OnValidSubmit="HandleValidSubmit">
@@ -26,7 +24,7 @@
                    Label="Pojemność"
                    @bind-Value="Model.Capacity" />
 
-  <MudSelect T="int"
+  <MudSelect T="Guid"
              Label="Typ zasobu"
              @bind-Value="Model.ResourceTypeId"
              Required="true">

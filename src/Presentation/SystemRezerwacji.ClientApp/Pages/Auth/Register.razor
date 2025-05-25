@@ -1,0 +1,95 @@
+@page "/register"
+@using SystemRezerwacji.Application.DTOs.Auth
+@inject IAuthClientService AuthService
+@inject NavigationManager NavigationManager
+
+<h3>Rejestracja</h3>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isSuccess ? "alert-success" : "alert-danger")">@message</div>
+}
+
+<EditForm Model="@registerModel" OnValidSubmit="HandleRegistration">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
+        <InputText id="email" class="form-control" @bind-Value="registerModel.Email" />
+        <ValidationMessage For="@(() => registerModel.Email)" />
+    </div>
+    <div class="mb-3">
+        <label for="password" class="form-label">Hasło:</label>
+        <InputText id="password" type="password" class="form-control" @bind-Value="registerModel.Password" />
+        <ValidationMessage For="@(() => registerModel.Password)" />
+    </div>
+    <div class="mb-3">
+        <label for="confirmPassword" class="form-label">Potwierdź Hasło:</label>
+        <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="registerModel.ConfirmPassword" />
+        <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+    </div>
+    <div class="mb-3">
+        <label for="firstName" class="form-label">Imię (opcjonalne):</label>
+        <InputText id="firstName" class="form-control" @bind-Value="registerModel.FirstName" />
+        <ValidationMessage For="@(() => registerModel.FirstName)" />
+    </div>
+    <div class="mb-3">
+        <label for="lastName" class="form-label">Nazwisko (opcjonalne):</label>
+        <InputText id="lastName" class="form-control" @bind-Value="registerModel.LastName" />
+        <ValidationMessage For="@(() => registerModel.LastName)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+        @if (isSubmitting)
+        {
+            <span class="spinner-border spinner-border-sm"></span> <span>Rejestrowanie...</span>
+        }
+        else
+        {
+            <span>Zarejestruj</span>
+        }
+    </button>
+    <NavLink href="login" class="btn btn-link">Masz już konto? Zaloguj się</NavLink>
+</EditForm>
+
+@code {
+    private RegisterUserDto registerModel = new RegisterUserDto();
+    private string? message;
+    private bool isSuccess = false;
+    private bool isSubmitting = false;
+
+    private async Task HandleRegistration()
+    {
+        isSubmitting = true;
+        message = null;
+        isSuccess = false;
+
+        try
+        {
+            var result = await AuthService.RegisterAsync(registerModel);
+            if (result != null)
+            {
+                message = result.Message;
+                isSuccess = result.IsSuccess;
+                if (isSuccess)
+                {
+                    // Można przekierować do logowania lub wyświetlić komunikat
+                    // NavigationManager.NavigateTo("/login");
+                }
+            }
+            else
+            {
+                message = "Rejestracja nie powiodła się. Spróbuj ponownie.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Wystąpił błąd: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}
