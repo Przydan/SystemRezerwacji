@@ -1,6 +1,8 @@
 using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json;
+using System.Text.Json; // Upewnij się, że masz ten using
+using System.Collections.Generic; // Dla List<T>
+using System.Linq; // Dla Select
+using System; // Dla Convert
 
 namespace SystemRezerwacji.WebApp.Auth;
 
@@ -9,17 +11,32 @@ public static class JwtParser
     public static IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
     {
         var claims = new List<Claim>();
-        var payload = jwt.Split('.')[1]; // Bierzemy tylko payload
+        var payload = jwt.Split('.')[1];
 
         var jsonBytes = ParseBase64WithoutPadding(payload);
+        // Używamy JsonSerializerOptions, aby nazwy właściwości były traktowane bez rozróżniania wielkości liter,
+        // na wypadek gdyby klucze w JWT miały inną wielkość liter niż oczekujemy.
+        // Jednak domyślnie JsonSerializer jest case-sensitive dla kluczy.
+        // Bezpieczniej jest jawnie sprawdzać klucze, które znamy.
         var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
         if (keyValuePairs != null)
         {
-            // Wyciągamy role (mogą być jako pojedynczy string lub tablica)
-            if (keyValuePairs.TryGetValue(ClaimTypes.Role, out object? roles))
+            // --- POCZĄTEK ZMIAN ---
+            string actualRoleClaimKeyInToken = "";
+
+            if (keyValuePairs.ContainsKey("role"))
             {
-                if (roles is JsonElement rolesElement)
+                actualRoleClaimKeyInToken = "role";
+            }
+            else if (keyValuePairs.ContainsKey(ClaimTypes.Role)) // Sprawdź też pełny URI, na wszelki wypadek
+            {
+                actualRoleClaimKeyInToken = ClaimTypes.Role;
+            }
+
+            if (!string.IsNullOrEmpty(actualRoleClaimKeyInToken) && keyValuePairs.TryGetValue(actualRoleClaimKeyInToken, out object? rolesValue))
+            {
+                if (rolesValue is JsonElement rolesElement)
                 {
                     if (rolesElement.ValueKind == JsonValueKind.Array)
                     {
@@ -33,14 +50,18 @@ public static class JwtParser
                         claims.Add(new Claim(ClaimTypes.Role, rolesElement.GetString() ?? ""));
                     }
                 }
-                else if (roles is string rolesString) // Na wszelki wypadek
+                else if (rolesValue is string rolesString) // Obsługa, jeśli wartość jest bezpośrednio stringiem
                 {
                      claims.Add(new Claim(ClaimTypes.Role, rolesString));
                 }
+                keyValuePairs.Remove(actualRoleClaimKeyInToken); // Usuń przetworzony claim roli
             }
-            keyValuePairs.Remove(ClaimTypes.Role); // Usuwamy, aby nie dodać ponownie
+            // --- KONIEC ZMIAN ---
 
             // Dodajemy pozostałe claims
+            // Upewnij się, że klucze, których nie przetworzyłeś jako role, nie są ponownie dodawane, jeśli ich nazwy są mapowane
+            // na standardowe ClaimTypes, które mogą mieć inne znaczenie.
+            // W tym przypadku, jeśli "role" zostało usunięte, to jest ok.
             claims.AddRange(keyValuePairs.Select(kvp => new Claim(kvp.Key, kvp.Value?.ToString() ?? "")));
         }
         return claims;

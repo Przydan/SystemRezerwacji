@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 using SystemRezerwacji.Application.DTOs.Auth;
 using SystemRezerwacji.Application.Interfaces.Identity;
 

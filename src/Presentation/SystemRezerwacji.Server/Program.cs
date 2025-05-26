@@ -36,8 +36,22 @@ public class Program
         // Autentykacja i Autoryzacja
         ConfigureAuthenticationAndAuthorization(builder);
         
+        // CORS
+        ConfigureCorsPolicy(builder);
+        
         // Serwisy aplikacyjne
         ConfigureApplicationServices(builder);
+    }
+
+    private static void ConfigureCorsPolicy(WebApplicationBuilder builder)
+    {
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowBlazorApp", policyBuilder =>
+                policyBuilder.WithOrigins(builder.Configuration["WebAppBaseUrl"] ?? "http://localhost:5214") // Pobierz z konfiguracji lub wpisz na stałe dla dewelopmentu
+                    .AllowAnyHeader()
+                    .AllowAnyMethod());
+        });
     }
 
     private static void ConfigureBasicServices(WebApplicationBuilder builder)
@@ -125,6 +139,7 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseCors("AllowBlazorApp"); 
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

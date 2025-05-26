@@ -5,56 +5,100 @@
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
-<MudPaper Class="pa-4" Elevation="3">
-    <MudText Typo="Typo.h4" GutterBottom="true">Logowanie</MudText>
+<PageTitle>Logowanie</PageTitle>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <MudAlert Severity="Severity.Error" Class="mb-3">@errorMessage</MudAlert>
-    }
+<MudGrid Justify="Justify.Center" Class="mt-12">
+    <MudItem xs="12" sm="8" md="6" lg="4">
+        <MudPaper Class="pa-4" Elevation="3">
+            <MudText Typo="Typo.h5" GutterBottom="true" Align="Align.Center">Logowanie</MudText>
 
-    <EditForm Model="@loginRequest" OnValidSubmit="HandleLogin">
-        <DataAnnotationsValidator />
-        <MudTextField @bind-Value="loginRequest.Email"
-                      For="@(() => loginRequest.Email)"
-                      Label="Email"
-                      InputType="InputType.Email"
-                      Variant="Variant.Outlined"
-                      Class="mb-3" />
+            <EditForm Model="@loginRequest" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
 
-        <MudTextField @bind-Value="loginRequest.Password"
-                      For="@(() => loginRequest.Password)"
-                      Label="Hasło"
-                      InputType="InputType.Password"
-                      Variant="Variant.Outlined"
-                      Class="mb-3" />
+                <MudTextField T="string"
+                              Label="Adres Email"
+                              @bind-Value="loginRequest.Email"
+                              For="@(() => loginRequest.Email)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              InputType="InputType.Email" />
+                <MudValidationMessage For="@(() => loginRequest.Email)" />
 
-        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
-            Zaloguj
-        </MudButton>
-        <MudButton Href="register" Variant="Variant.Text" Color="Color.Secondary" Class="ml-2">
-            Nie masz konta? Zarejestruj się!
-        </MudButton>
-    </EditForm>
-</MudPaper>
+                <MudTextField T="string"
+                              Label="Hasło"
+                              @bind-Value="loginRequest.Password"
+                              For="@(() => loginRequest.Password)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              InputType="InputType.Password" />
+                <MudValidationMessage For="@(() => loginRequest.Password)" />
+
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Class="my-4">@errorMessage</MudAlert>
+                }
+
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Class="mt-4"
+                           Disabled="isProcessing">
+                    @if (isProcessing)
+                    {
+                        <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                        <span>Logowanie...</span>
+                    }
+                    else
+                    {
+                        <span>Zaloguj się</span>
+                    }
+                </MudButton>
+            </EditForm>
+            <MudText Align="Align.Center" Class="mt-3">
+                Nie masz konta? <MudLink Href="/register">Zarejestruj się</MudLink>
+            </MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
 
 @code {
     private LoginRequestDto loginRequest = new();
     private string? errorMessage;
+    private bool isProcessing = false;
 
     private async Task HandleLogin()
     {
+        isProcessing = true;
         errorMessage = null;
-        var result = await AuthService.LoginAsync(loginRequest);
+        try
+        {
+            var result = await AuthService.LoginAsync(loginRequest);
 
-        if (result.IsSuccess)
-        {
-            Snackbar.Add("Zalogowano pomyślnie!", Severity.Success);
-            NavigationManager.NavigateTo("/");
+            if (result != null && result.IsSuccess)
+            {
+                Snackbar.Add("Zalogowano pomyślnie!", Severity.Success);
+                // CustomAuthenticationStateProvider powinien automatycznie zaktualizować stan
+                // i przekierować lub odświeżyć UI.
+                // Możemy wymusić nawigację, jeśli jest to pożądane.
+                NavigationManager.NavigateTo("/", forceLoad: true); // forceLoad może być potrzebne do pełnego odświeżenia stanu
+            }
+            else
+            {
+                errorMessage = result?.Message ?? "Wystąpił błąd podczas logowania.";
+                Snackbar.Add(errorMessage, Severity.Error);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            errorMessage = result.Message;
+            errorMessage = $"Wystąpił nieoczekiwany błąd: {ex.Message}";
+            Snackbar.Add(errorMessage, Severity.Error, config => { config.ShowCloseIcon = true; });
+            // Logowanie wyjątku
+            Console.WriteLine($"Login error: {ex}");
+        }
+        finally
+        {
+            isProcessing = false;
         }
     }
 }

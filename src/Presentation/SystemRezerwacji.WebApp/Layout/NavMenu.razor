@@ -1,39 +1,33 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">SystemRezerwacji.WebApp</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿@using Microsoft.AspNetCore.Components.Authorization
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink Href="counter" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
+
+    <AuthorizeView Roles="Administrator">
+        <Authorized>
+            <MudListSubheader>Administracja</MudListSubheader>
+            <MudNavLink Href="/admin/resourcetypes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AdminPanelSettings">
+                Zarządzaj Typami Zasobów
+            </MudNavLink>
+            @* Tutaj możesz dodać więcej linków administracyjnych *@
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView>
+        <Authorized>
+            <MudListSubheader>Moje Konto</MudListSubheader>
+            <MudNavLink Href="/mybookings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.BookOnline">
+                Moje Rezerwacje
+            </MudNavLink>
+            @* Inne linki dla zalogowanych użytkowników *@
+        </Authorized>
+    </AuthorizeView>
+</MudNavMenu>
 
 @code {
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    // Jeśli potrzebujesz jakiejś logiki w NavMenu, dodaj ją tutaj.
+    // Na przykład, jeśli stan otwarcia/zamknięcia podmenu byłby zarządzany.
+    // Dla prostych linków jak powyżej, blok @code może pozostać pusty
+    // lub można go usunąć, jeśli nie ma pliku NavMenu.razor.cs.
 }
