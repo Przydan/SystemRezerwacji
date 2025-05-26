@@ -31,4 +31,8 @@
       <ProjectReference Include="..\..\Core\SystemRezerwacji.Application\SystemRezerwacji.Application.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Layout\" />
+    </ItemGroup>
+
 </Project>

@@ -1,0 +1,60 @@
+@page "/login"
+@using SystemRezerwacji.WebApp.Models
+@using SystemRezerwacji.WebApp.Services
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4" Elevation="3">
+    <MudText Typo="Typo.h4" GutterBottom="true">Logowanie</MudText>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-3">@errorMessage</MudAlert>
+    }
+
+    <EditForm Model="@loginRequest" OnValidSubmit="HandleLogin">
+        <DataAnnotationsValidator />
+        <MudTextField @bind-Value="loginRequest.Email"
+                      For="@(() => loginRequest.Email)"
+                      Label="Email"
+                      InputType="InputType.Email"
+                      Variant="Variant.Outlined"
+                      Class="mb-3" />
+
+        <MudTextField @bind-Value="loginRequest.Password"
+                      For="@(() => loginRequest.Password)"
+                      Label="Hasło"
+                      InputType="InputType.Password"
+                      Variant="Variant.Outlined"
+                      Class="mb-3" />
+
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+            Zaloguj
+        </MudButton>
+        <MudButton Href="register" Variant="Variant.Text" Color="Color.Secondary" Class="ml-2">
+            Nie masz konta? Zarejestruj się!
+        </MudButton>
+    </EditForm>
+</MudPaper>
+
+@code {
+    private LoginRequestDto loginRequest = new();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+        var result = await AuthService.LoginAsync(loginRequest);
+
+        if (result.IsSuccess)
+        {
+            Snackbar.Add("Zalogowano pomyślnie!", Severity.Success);
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = result.Message;
+        }
+    }
+}
