@@ -1,22 +1,44 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @using SystemRezerwacji.WebApp.Services
+
 @inject NavigationManager NavigationManager
 @inject IAuthService AuthService
 
 <AuthorizeView>
     <Authorized>
-        <MudText>Witaj, @context.User.Identity?.Name!</MudText>
-        <MudButton Color="Color.Inherit" OnClick="HandleLogout">Wyloguj</MudButton>
+        <MudText Typo="Typo.body1" Class="mr-4">
+            Witaj, @(context.User.Identity?.Name)
+            @{
+                var firstName = context.User.FindFirst(ClaimTypes.GivenName)?.Value;
+                var lastName = context.User.FindFirst(ClaimTypes.Surname)?.Value;
+                if (!string.IsNullOrWhiteSpace(firstName))
+                {
+                    <span> (@firstName @lastName)</span>
+                }
+            }
+        </MudText>
+        <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick="BeginLogout">Wyloguj</MudButton>
     </Authorized>
     <NotAuthorized>
-        <MudButton Href="register" Color="Color.Inherit">Rejestracja</MudButton>
-        <MudButton Href="login" Color="Color.Inherit">Zaloguj</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="register">Zarejestruj się</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="login">Zaloguj się</MudButton>
     </NotAuthorized>
 </AuthorizeView>
 
 @code {
-    private async Task HandleLogout()
+    private async Task BeginLogout()
     {
         await AuthService.LogoutAsync();
-        NavigationManager.NavigateTo("/"); // Przekieruj na stronę główną po wylogowaniu
+        // CustomAuthenticationStateProvider powinien obsłużyć usunięcie tokenu i notyfikację.
+        // Po wylogowaniu, Blazor powinien automatycznie odświeżyć stan AuthorizeView.
+        // Możemy wymusić nawigację do strony głównej, aby upewnić się, że wszystko jest czyste.
+        NavigationManager.NavigateTo("/", forceLoad: true);
     }
+
+    // Jeśli masz plik LoginDisplay.razor.cs, przenieś tam logikę @code.
+    // Upewnij się, że w SystemRezerwacji.WebApp/Shared/LoginDisplay.razor.cs
+    // nie ma konfliktu z tym blokiem @code.
+    // Jeśli plik .cs istnieje i jest pusty lub zawiera tylko `partial class LoginDisplay`,
+    // możesz usunąć ten blok @code i przenieść jego zawartość do pliku .cs.
 }
