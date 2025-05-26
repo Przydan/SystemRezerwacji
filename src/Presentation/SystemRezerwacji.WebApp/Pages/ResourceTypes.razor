@@ -1,0 +1,48 @@
+@page "/resourcetypes"
+@using Microsoft.AspNetCore.Authorization
+@using SystemRezerwacji.WebApp.Models
+@using SystemRezerwacji.WebApp.Services
+@attribute [Authorize] // Wymaga zalogowania!
+@inject IResourceTypeService ResourceTypeService
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" GutterBottom="true">Typy Zasobów</MudText>
+
+@if (resourceTypes == null && isLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (resourceTypes != null)
+{
+    <MudTable Items="@resourceTypes" Hover="true" Striped="true">
+        <HeaderContent>
+            <MudTh>Nazwa</MudTh>
+            <MudTh>Opis</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nazwa">@context.Name</MudTd>
+            <MudTd DataLabel="Opis">@context.Description</MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+else
+{
+    <MudAlert Severity="Severity.Error">Nie udało się załadować danych.</MudAlert>
+}
+
+
+@code {
+    private List<ResourceTypeDto>? resourceTypes;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        resourceTypes = await ResourceTypeService.GetResourceTypesAsync();
+        if(resourceTypes == null)
+        {
+            Snackbar.Add("Błąd podczas pobierania danych z API.", Severity.Error);
+        }
+        isLoading = false;
+    }
+}

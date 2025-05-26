@@ -1,0 +1,22 @@
+@using SystemRezerwacji.WebApp.Services
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+
+<AuthorizeView>
+    <Authorized>
+        <MudText>Witaj, @context.User.Identity?.Name!</MudText>
+        <MudButton Color="Color.Inherit" OnClick="HandleLogout">Wyloguj</MudButton>
+    </Authorized>
+    <NotAuthorized>
+        <MudButton Href="register" Color="Color.Inherit">Rejestracja</MudButton>
+        <MudButton Href="login" Color="Color.Inherit">Zaloguj</MudButton>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        NavigationManager.NavigateTo("/"); // Przekieruj na stronę główną po wylogowaniu
+    }
+}
