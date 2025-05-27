@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SystemRezerwacji.Infrastructure.Persistence.DbContext;
 
@@ -10,9 +11,11 @@ using SystemRezerwacji.Infrastructure.Persistence.DbContext;
 namespace SystemRezerwacji.Infrastructure.Migrations
 {
     [DbContext(typeof(SystemRezerwacjiDbContext))]
-    partial class SystemRezerwacjiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250527192419_init")]
+    partial class init
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.16");
