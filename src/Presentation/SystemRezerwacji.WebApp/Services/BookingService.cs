@@ -18,28 +18,26 @@ namespace SystemRezerwacji.WebApp.Services
 
         public async Task CreateBookingAsync(BookingRequestDto dto)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/bookings", dto);
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"CreateBooking failed: {response.StatusCode} – {error}");
-            }
+            var resp = await _httpClient.PostAsJsonAsync("api/bookings", dto);
+            resp.EnsureSuccessStatusCode();
         }
 
         public async Task<List<BookingDto>> GetMyBookingsAsync()
         {
-            var bookings = await _httpClient.GetFromJsonAsync<List<BookingDto>>("api/bookings/my");
-            return bookings ?? new List<BookingDto>();
+            var list = await _httpClient.GetFromJsonAsync<List<BookingDto>>("api/bookings/my");
+            return list ?? new List<BookingDto>();
+        }
+
+        public async Task UpdateBookingAsync(BookingRequestDto dto)
+        {
+            var resp = await _httpClient.PutAsJsonAsync($"api/bookings/{dto.Id}", dto);
+            resp.EnsureSuccessStatusCode();
         }
 
         public async Task CancelBookingAsync(Guid bookingId)
         {
-            var response = await _httpClient.PostAsync($"api/bookings/{bookingId}/cancel", null);
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"CancelBooking failed: {response.StatusCode} – {error}");
-            }
+            var resp = await _httpClient.PostAsync($"api/bookings/{bookingId}/cancel", null);
+            resp.EnsureSuccessStatusCode();
         }
     }
 }
