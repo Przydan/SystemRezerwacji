@@ -19,7 +19,7 @@ public class ResourceClientService
         _http.PutAsJsonAsync($"/api/resources/{dto.Id}", dto)
              .ContinueWith(t => t.Result.IsSuccessStatusCode);
 
-    public Task<bool> DeleteResourceAsync(int id) =>
+    public Task<bool> DeleteResourceAsync(Guid id) =>
         _http.DeleteAsync($"/api/resources/{id}")
              .ContinueWith(t => t.Result.IsSuccessStatusCode);
 }

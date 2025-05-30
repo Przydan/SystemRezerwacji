@@ -5,7 +5,7 @@ using SystemRezerwacji.WebApp.Models;
 
 namespace SystemRezerwacji.WebApp.Services
 {
-    public interface IResourceService
+    public interface IResourceServiceTemp
     {
         Task<List<ResourceDto>> GetResourcesAsync();
         Task CreateResourceAsync(ResourceDto dto);

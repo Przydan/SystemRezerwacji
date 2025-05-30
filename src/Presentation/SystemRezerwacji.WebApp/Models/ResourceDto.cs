@@ -1,9 +1,30 @@
 using System;
-
 namespace SystemRezerwacji.WebApp.Models
 {
     public class ResourceDto
     {
+        // Konstruktor domyślny
+        public ResourceDto()
+        {
+            // Domyślne wartości są już ustawione przy deklaracji właściwości
+        }
+        
+        // Konstruktor kopiujący
+        public ResourceDto(ResourceDto resource)
+        {
+            if (resource == null)
+                return;
+                
+            Id = resource.Id;
+            Name = resource.Name;
+            Description = resource.Description;
+            Location = resource.Location;
+            Capacity = resource.Capacity;
+            IsActive = resource.IsActive;
+            ResourceTypeId = resource.ResourceTypeId;
+            ResourceTypeName = resource.ResourceTypeName;
+        }
+        
         public Guid Id { get; set; }
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
