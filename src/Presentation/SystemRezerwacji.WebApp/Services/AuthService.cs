@@ -1,47 +1,71 @@
-using SystemRezerwacji.WebApp.Models;
-using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
+using System.Security.Claims;
+using System.Text.Json;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
-using SystemRezerwacji.WebApp.Auth; // Potrzebne do CustomAuthenticationStateProvider
+using SystemRezerwacji.WebApp.Auth;
+using SystemRezerwacji.WebApp.Models;
 
-namespace SystemRezerwacji.WebApp.Services;
-
-public class AuthService : IAuthService
+namespace SystemRezerwacji.WebApp.Services
 {
-    private readonly HttpClient _httpClient;
-    private readonly CustomAuthenticationStateProvider _authStateProvider;
-
-    public AuthService(HttpClient httpClient, AuthenticationStateProvider authStateProvider)
+    public class AuthService : AuthenticationStateProvider
     {
-        _httpClient = httpClient;
-        // Musimy rzutować, aby mieć dostęp do MarkUserAs...
-        _authStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
-    }
+        private readonly HttpClient _http;
+        private readonly ILocalStorageService _storage;
 
-    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest)
-    {
-        var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginRequest);
-        var authResponse = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
-
-        if (authResponse != null && authResponse.IsSuccess && !string.IsNullOrEmpty(authResponse.Token))
+        public AuthService(HttpClient http, ILocalStorageService storage)
         {
-            await _authStateProvider.MarkUserAsAuthenticated(authResponse.Token);
-            return authResponse;
+            _http = http;
+            _storage = storage;
         }
 
-        return authResponse ?? new AuthResponseDto { IsSuccess = false, Message = "Wystąpił nieznany błąd logowania." };
-    }
+        public async Task<bool> LoginAsync(LoginRequestDto dto)
+        {
+            var resp = await _http.PostAsJsonAsync("api/auth/login", dto);
+            if (!resp.IsSuccessStatusCode) return false;
+            var jwt = await resp.Content.ReadAsStringAsync();
+            await _storage.SetItemAsync("authToken", jwt);
+            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            return true;
+        }
 
-    public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto registerRequest)
-    {
-        var response = await _httpClient.PostAsJsonAsync("api/auth/register", registerRequest);
-        return await response.Content.ReadFromJsonAsync<AuthResponseDto>()
-               ?? new AuthResponseDto { IsSuccess = false, Message = "Wystąpił nieznany błąd rejestracji." };
-    }
+        public async Task LogoutAsync()
+        {
+            await _storage.RemoveItemAsync("authToken");
+            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        }
 
-    public async Task LogoutAsync()
-    {
-        await _authStateProvider.MarkUserAsLoggedOut();
+        public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+        {
+            var savedToken = await _storage.GetItemAsStringAsync("authToken");
+            var identity = new ClaimsIdentity();
+            if (!string.IsNullOrEmpty(savedToken))
+            {
+                identity = new ClaimsIdentity(ParseClaimsFromJwt(savedToken), "jwt");
+                _http.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", savedToken);
+            }
+            return new AuthenticationState(new ClaimsPrincipal(identity));
+        }
+
+        private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
+        {
+            var payload = jwt.Split('.')[1];
+            var json = Base64UrlDecode(payload);
+            var claims = JsonSerializer.Deserialize<Dictionary<string, object>>(json)!;
+            return claims.Select(kvp => new Claim(kvp.Key, kvp.Value.ToString()!));
+        }
+
+        private static string Base64UrlDecode(string str)
+        {
+            str = str.Replace('-', '+').Replace('_', '/');
+            switch (str.Length % 4)
+            {
+                case 2: str += "=="; break;
+                case 3: str += "="; break;
+            }
+            return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(str));
+        }
     }
 }

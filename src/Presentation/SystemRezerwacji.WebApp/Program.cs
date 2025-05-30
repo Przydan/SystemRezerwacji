@@ -1,18 +1,15 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using SystemRezerwacji.WebApp;
 using MudBlazor.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
+using SystemRezerwacji.WebApp;
 using SystemRezerwacji.WebApp.Auth;
 using SystemRezerwacji.WebApp.Services;
-using SystemRezerwacji.WebApp.Models;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
-
-// --- Konfiguracja Usług ---
 
 // 1. MudBlazor
 builder.Services.AddMudServices();
@@ -20,36 +17,25 @@ builder.Services.AddMudServices();
 // 2. Blazored LocalStorage
 builder.Services.AddBlazoredLocalStorage();
 
-// 3. Autoryzacja Core
+// 3. Authorization Core
 builder.Services.AddAuthorizationCore();
 
-// 4. Delegating Handler (WAŻNE: zarejestruj go)
+// 4. HTTP z tokenem
 builder.Services.AddScoped<AuthTokenHandler>();
-
-// 5. HttpClient Factory z Handlerem
 builder.Services.AddHttpClient("SystemRezerwacji.API", client =>
-    {
-        client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]
-            ?? throw new InvalidOperationException("ApiBaseUrl not configured"));
-    })
-    .AddHttpMessageHandler<AuthTokenHandler>(); // <-- Dodajemy nasz handler
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]
+        ?? throw new InvalidOperationException("ApiBaseUrl not configured")))
+    .AddHttpMessageHandler<AuthTokenHandler>();
+builder.Services.AddScoped(sp =>
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient("SystemRezerwacji.API"));
 
-// 6. Udostępnienie HttpClient dla AuthProvider (i innych, jeśli potrzebują)
-//    Używamy "czystego" HttpClienta, bo handler doda token.
-//    Można też wstrzykiwać IHttpClientFactory i tworzyć klienta tam, gdzie potrzebny.
-builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>()
-    .CreateClient("SystemRezerwacji.API"));
-
-// 7. Custom AuthenticationStateProvider
-builder.Services.AddScoped<CustomAuthenticationStateProvider>();
-builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
-    provider.GetRequiredService<CustomAuthenticationStateProvider>());
-
-// 8. Rejestracja serwisów aplikacyjnych
+// 5. Custom AuthenticationStateProvider + IAuthService
+builder.Services.AddScoped<AuthenticationStateProvider, AuthService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// 6. Pozostałe serwisy
+builder.Services.AddScoped<IResourceService, ResourceService>();
 builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
-// Tutaj dodasz inne serwisy, np. ResourceTypeService
-
-// --- Budowanie Aplikacji ---
 await builder.Build().RunAsync();

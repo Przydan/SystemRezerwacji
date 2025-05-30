@@ -1,31 +1,27 @@
 @inherits LayoutComponentBase
+@using MudBlazor
 
-<MudThemeProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider>
+  <MudDialogProvider>
+    <MudSnackbarProvider>
 
-<MudLayout>
-    <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">System Rezerwacji</MudText>
-        <MudSpacer />
-        <LoginDisplay /> 
-    </MudAppBar>
-    <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
-        <NavMenu /> 
-    </MudDrawer>
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="my-4 pt-4">
-            @Body
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
+      <!-- Górny pasek aplikacji -->
+      <MudAppBar Color="Color.Primary">
+        <MudText Typo="Typo.h6" Class="ml-2">Aplikacja Rezerwacyjna</MudText>
+      </MudAppBar>
 
-@code {
-    private bool _drawerOpen = true;
+      <!-- Pasek nawigacji / menu -->
+      <MudDrawerContainer>
+        <MudDrawer Anchor="Anchor.Left" Variant="DrawerVariant.Responsive" Elevation="1">
+          <NavMenu />  @* Twój komponent NavMenu powinien być w Client/Shared/NavMenu.razor *@
+        </MudDrawer>
 
-    void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-}
+        <!-- Główna zawartość stron -->
+        <MudMainContent>
+          @Body
+        </MudMainContent>
+      </MudDrawerContainer>
+
+    </MudSnackbarProvider>
+  </MudDialogProvider>
+</MudThemeProvider>
