@@ -1,0 +1,36 @@
+@page "/cancel-booking/{id:guid}"
+@using System
+@using Microsoft.AspNetCore.Components
+@using MudBlazor
+@using SystemRezerwacji.WebApp.Services
+
+@inject IBookingService BookingService
+@inject NavigationManager Nav
+
+<h3>Anuluj rezerwację</h3>
+<p>Czy na pewno chcesz anulować tę rezerwację?</p>
+
+<MudButton Color="Color.Error"
+           Variant="Variant.Filled"
+           OnClick="ConfirmCancel">
+    Tak, anuluj
+</MudButton>
+<MudButton Color="Color.Primary"
+           Variant="Variant.Text"
+           OnClick="@(() => Nav.NavigateTo("/my-reservations"))"
+           Class="ml-2">
+    Nie, wróć
+</MudButton>
+
+@code {
+    // parametr pobrany z trasy
+    [Parameter] public Guid id { get; set; }
+
+    private async Task ConfirmCancel()
+    {
+        // wywołanie serwisu anulującego rezerwację
+        await BookingService.CancelBookingAsync(id);
+        // przekierowanie z powrotem do "Moje rezerwacje"
+        Nav.NavigateTo("/my-reservations");
+    }
+}

@@ -9,6 +9,7 @@ namespace SystemRezerwacji.WebApp.Services
     {
         Task CreateBookingAsync(BookingRequestDto dto);
         Task<List<BookingDto>> GetMyBookingsAsync();
+        Task UpdateBookingAsync(BookingRequestDto dto);
         Task CancelBookingAsync(Guid bookingId);
     }
 }

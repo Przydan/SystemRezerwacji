@@ -1,0 +1,59 @@
+@page "/edit-booking/{id:guid}"
+@using SystemRezerwacji.WebApp.Models
+@using SystemRezerwacji.WebApp.Services
+@using SystemRezerwacji.WebApp.Components
+@inject IBookingService BookingService
+@inject IResourceService ResourceService
+@inject NavigationManager Nav
+
+<h3>Edytuj rezerwację</h3>
+
+@if (model == null || resources == null)
+{
+    <p><em>Ładowanie…</em></p>
+}
+else
+{
+    <BookingForm
+        Model="model"
+        Resources="resources"
+        OnValidSubmit="HandleUpdate" />
+}
+
+@code {
+    [Parameter] public Guid id { get; set; }
+
+    private BookingRequestDto? model;
+    private List<ResourceDto>? resources;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Pobierz wszystkie zasoby
+        resources = await ResourceService.GetResourcesAsync();
+
+        // 2. Pobierz swoje rezerwacje i znajdź tę o przekazanym id
+        var mine = await BookingService.GetMyBookingsAsync();
+        var existing = mine.FirstOrDefault(x => x.Id == id);
+        if (existing == null)
+        {
+            Nav.NavigateTo("/my-reservations");
+            return;
+        }
+
+        // 3. Zmapuj BookingDto na BookingRequestDto
+        model = new BookingRequestDto
+        {
+            Id = existing.Id,
+            ResourceId = existing.ResourceId,
+            StartTime  = existing.StartTime,
+            EndTime    = existing.EndTime,
+            Notes      = existing.Notes
+        };
+    }
+
+    private async Task HandleUpdate(BookingRequestDto dto)
+    {
+        await BookingService.UpdateBookingAsync(dto);
+        Nav.NavigateTo("/my-reservations");
+    }
+}

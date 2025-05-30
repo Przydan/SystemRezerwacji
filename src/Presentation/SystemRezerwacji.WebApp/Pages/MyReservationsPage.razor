@@ -1,46 +1,54 @@
 ﻿@page "/my-reservations"
+@using System
+@using System.Collections.Generic
 @using MudBlazor
-@using SystemRezerwacji.WebApp.Services
 @using SystemRezerwacji.WebApp.Models
-@inject BookingService BookingService
+@using SystemRezerwacji.WebApp.Services
+@inject IBookingService BookingService
 
 <h3>Moje rezerwacje</h3>
 
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <MudAlert Severity="MudBlazor.Severity.Error" Elevation="0" Dense="true">@errorMessage</MudAlert>
-}
-
 @if (bookings == null)
 {
-    <MudProgressCircular Indeterminate="true" Size="Size.Medium" />
+    <p><em>Ładowanie...</em></p>
 }
-else if (bookings.Count == 0)
+else if (!bookings.Any())
 {
     <p>Brak rezerwacji.</p>
 }
 else
 {
-    <MudTable Items="@bookings" Hover="true" Bordered="true" Striped="true">
+    <!-- opcjonalny pasek wyszukiwania -->
+    <MudTextField @bind-Value="filterName"
+                  Placeholder="Wyszukaj zasób..."
+                  Adornment="Adornment.End"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Clearable="true"
+                  Class="mb-4" />
+
+    <MudTable Items="bookings"
+              Filter="FilterFunc"
+              Hover="true"
+              Bordered="true"
+              Striped="true">
         <HeaderContent>
-            <MudTh>Nazwa zasobu</MudTh>
-            <MudTh>Od</MudTh>
-            <MudTh>Do</MudTh>
+            <MudTh>Zasób</MudTh>
+            <MudTh>Start</MudTh>
+            <MudTh>Koniec</MudTh>
             <MudTh>Status</MudTh>
             <MudTh>Akcje</MudTh>
         </HeaderContent>
-        <RowTemplate Context="booking">
-            <MudTd>@booking.ResourceName</MudTd>
-            <MudTd>@booking.StartTime.ToString("g")</MudTd>
-            <MudTd>@booking.EndTime.ToString("g")</MudTd>
-            <MudTd>@booking.Status</MudTd>
+        <RowTemplate>
+            <MudTd>@context.ResourceName</MudTd>
+            <MudTd>@context.StartTime.ToString("g")</MudTd>
+            <MudTd>@context.EndTime.ToString("g")</MudTd>
+            <MudTd>@context.Status</MudTd>
             <MudTd>
-                @if (booking.Status != "Cancelled")
-                {
-                    <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="@(() => CancelBooking(booking.Id))">
-                        Anuluj
-                    </MudButton>
-                }
+                <MudButton Color="Color.Error"
+                           Variant="Variant.Text"
+                           OnClick="@(() => Cancel(context.Id))">
+                    Anuluj
+                </MudButton>
             </MudTd>
         </RowTemplate>
     </MudTable>
@@ -48,31 +56,27 @@ else
 
 @code {
     private List<BookingDto>? bookings;
-    private string? errorMessage;
+    private string filterName = "";
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            bookings = await BookingService.GetMyBookingsAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Nie udało się załadować listy rezerwacji: " + ex.Message;
-        }
+        bookings = await BookingService.GetMyBookingsAsync();
     }
 
-    private async Task CancelBooking(Guid bookingId)
+    /// <summary>
+    /// Zwraca true/false w każdej gałęzi – dzięki temu RazorGenerator nie rypie CS1662
+    /// </summary>
+    private bool FilterFunc(BookingDto b)
     {
-        try
-        {
-            await BookingService.CancelBookingAsync(bookingId);
-            // Po anulowaniu, odśwież listę rezerwacji
-            bookings = await BookingService.GetMyBookingsAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Błąd podczas anulowania rezerwacji: " + ex.Message;
-        }
+        // możesz tu dołożyć dowolne inne kryteria filtrowania
+        return string.IsNullOrWhiteSpace(filterName)
+               || b.ResourceName.Contains(filterName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task Cancel(Guid id)
+    {
+        await BookingService.CancelBookingAsync(id);
+        // odśwież listę po anulowaniu
+        bookings = await BookingService.GetMyBookingsAsync();
     }
 }

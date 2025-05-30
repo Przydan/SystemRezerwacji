@@ -1,0 +1,69 @@
+@page "/resource/{ResourceId:guid}"
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using MudBlazor
+@using SystemRezerwacji.WebApp.Models
+@using SystemRezerwacji.WebApp.Services
+@using SystemRezerwacji.WebApp.Components
+@inject IResourceService ResourceService
+@inject IBookingService  BookingService
+
+<h3>Szczegóły zasobu</h3>
+
+@if (resource == null)
+{
+    <p><em>Ładowanie zasobu…</em></p>
+}
+else
+{
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <h4>@resource.Name</h4>
+            <p>@resource.Description</p>
+            <p><b>Typ:</b> @resource.ResourceTypeName</p>
+            <p><b>Lokalizacja:</b> @resource.Location</p>
+            <p><b>Pojemność:</b> @resource.Capacity</p>
+        </MudCardContent>
+    </MudCard>
+
+    <h4>Kalendarz rezerwacji</h4>
+
+    @if (bookings == null)
+    {
+        <p><em>Ładowanie rezerwacji…</em></p>
+    }
+    else if (!bookings.Any())
+    {
+        <p>Brak rezerwacji dla tego zasobu.</p>
+    }
+    else
+    {
+        @foreach (var b in bookings)
+        {
+            <BookingListItem Booking="b" />
+        }
+    }
+}
+
+@code {
+    [Parameter] public Guid ResourceId { get; set; }
+
+    private ResourceDto?      resource;
+    private List<BookingDto>? bookings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Pobierz listę zasobów i znajdź ten o pasującym ID
+        resource = (await ResourceService.GetResourcesAsync())
+                       .FirstOrDefault(r => r.Id == ResourceId);
+
+        // 2. Jeśli zasób znaleziony, pobierz wszystkie MOJE rezerwacje 
+        //    i filtrowaj po nazwy zasobu (bo BookingDto nie ma ResourceId)
+        if (resource != null)
+        {
+            bookings = (await BookingService.GetMyBookingsAsync())
+                         .Where(b => b.ResourceName == resource.Name)
+                         .ToList();
+        }
+    }
+}
