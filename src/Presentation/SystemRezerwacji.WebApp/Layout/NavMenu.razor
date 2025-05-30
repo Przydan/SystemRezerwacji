@@ -1,33 +1,29 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@inject NavigationManager Nav
+@inject IAuthService AuthService
 
 <MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="counter" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
+  <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home">Strona główna</MudNavLink>
 
-    <AuthorizeView Roles="Administrator">
-        <Authorized>
-            <MudListSubheader>Administracja</MudListSubheader>
-            <MudNavLink Href="/admin/resourcetypes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AdminPanelSettings">
-                Zarządzaj Typami Zasobów
-            </MudNavLink>
-            @* Tutaj możesz dodać więcej linków administracyjnych *@
-        </Authorized>
-    </AuthorizeView>
-
-    <AuthorizeView>
-        <Authorized>
-            <MudListSubheader>Moje Konto</MudListSubheader>
-            <MudNavLink Href="/mybookings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.BookOnline">
-                Moje Rezerwacje
-            </MudNavLink>
-            @* Inne linki dla zalogowanych użytkowników *@
-        </Authorized>
-    </AuthorizeView>
+  <AuthorizeView>
+    <Authorized>
+      <MudNavLink Href="/my-reservations" Icon="@Icons.Material.Filled.BookOnline">
+        Moje rezerwacje
+      </MudNavLink>
+      <MudNavLink OnClick="Logout" Icon="@Icons.Material.Filled.ExitToApp">
+        Wyloguj
+      </MudNavLink>
+    </Authorized>
+    <NotAuthorized>
+      <MudNavLink Href="/login">Zaloguj</MudNavLink>
+      <MudNavLink Href="/register">Zarejestruj</MudNavLink>
+    </NotAuthorized>
+  </AuthorizeView>
 </MudNavMenu>
 
 @code {
-    // Jeśli potrzebujesz jakiejś logiki w NavMenu, dodaj ją tutaj.
-    // Na przykład, jeśli stan otwarcia/zamknięcia podmenu byłby zarządzany.
-    // Dla prostych linków jak powyżej, blok @code może pozostać pusty
-    // lub można go usunąć, jeśli nie ma pliku NavMenu.razor.cs.
+  private async Task Logout()
+  {
+    await AuthService.LogoutAsync();
+    Nav.NavigateTo("/");
+  }
 }

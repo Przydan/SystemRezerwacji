@@ -1,140 +1,78 @@
 @page "/register"
 @using SystemRezerwacji.WebApp.Models
-@using SystemRezerwacji.WebApp.Services
 @inject IAuthService AuthService
-@inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
 <PageTitle>Rejestracja</PageTitle>
 
 <MudGrid Justify="Justify.Center" Class="mt-12">
-    <MudItem xs="12" sm="8" md="6" lg="4">
-        <MudPaper Class="pa-4" Elevation="3">
-            <MudText Typo="Typo.h5" GutterBottom="true" Align="Align.Center">Rejestracja Nowego Użytkownika</MudText>
+  <MudItem xs="12" sm="8" md="6" lg="4">
+    <MudPaper Class="pa-4" Elevation="3">
+      <MudText Typo="Typo.h5" Align="Align.Center">Rejestracja</MudText>
+      <EditForm Model="@registerRequest" OnValidSubmit="HandleRegistration">
+        <DataAnnotationsValidator />
 
-            <EditForm Model="@registerRequest" OnValidSubmit="HandleRegistration">
-                <DataAnnotationsValidator />
+        <MudTextField T="string"
+                      Label="Email"
+                      @bind-Value="registerRequest.Email"
+                      For="@(() => registerRequest.Email)"
+                      Required="true" />
+        <MudValidationMessage For="@(() => registerRequest.Email)" />
 
-                <MudTextField T="string"
-                              Label="Imię (opcjonalnie)"
-                              @bind-Value="registerRequest.FirstName"
-                              For="@(() => registerRequest.FirstName)"
-                              Variant="Variant.Outlined"
-                              Margin="Margin.Dense" />
+        <MudTextField T="string"
+                      Label="Hasło"
+                      InputType="InputType.Password"
+                      @bind-Value="registerRequest.Password"
+                      For="@(() => registerRequest.Password)"
+                      Required="true" />
+        <MudValidationMessage For="@(() => registerRequest.Password)" />
 
-                <MudTextField T="string"
-                              Label="Nazwisko (opcjonalnie)"
-                              @bind-Value="registerRequest.LastName"
-                              For="@(() => registerRequest.LastName)"
-                              Variant="Variant.Outlined"
-                              Margin="Margin.Dense" />
+        <MudTextField T="string"
+                      Label="Potwierdź hasło"
+                      InputType="InputType.Password"
+                      @bind-Value="registerRequest.ConfirmPassword"
+                      For="@(() => registerRequest.ConfirmPassword)"
+                      Required="true" />
+        <MudValidationMessage For="@(() => registerRequest.ConfirmPassword)" />
 
-                <MudTextField T="string"
-                              Label="Adres Email"
-                              @bind-Value="registerRequest.Email"
-                              For="@(() => registerRequest.Email)"
-                              Variant="Variant.Outlined"
-                              Margin="Margin.Dense"
-                              InputType="InputType.Email"
-                              Required="true"
-                              RequiredError="Adres email jest wymagany." />
-                <MudValidationMessage For="@(() => registerRequest.Email)" />
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+          <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+        }
 
-                <MudTextField T="string"
-                              Label="Hasło"
-                              @bind-Value="registerRequest.Password"
-                              For="@(() => registerRequest.Password)"
-                              Variant="Variant.Outlined"
-                              Margin="Margin.Dense"
-                              InputType="InputType.Password"
-                              Required="true"
-                              RequiredError="Hasło jest wymagane." />
-                <MudValidationMessage For="@(() => registerRequest.Password)" />
-
-                <MudTextField T="string"
-                              Label="Potwierdź Hasło"
-                              @bind-Value="registerRequest.ConfirmPassword"
-                              For="@(() => registerRequest.ConfirmPassword)"
-                              Variant="Variant.Outlined"
-                              Margin="Margin.Dense"
-                              InputType="InputType.Password"
-                              Required="true"
-                              RequiredError="Potwierdzenie hasła jest wymagane." />
-                <MudValidationMessage For="@(() => registerRequest.ConfirmPassword)" />
-
-                @if (!string.IsNullOrWhiteSpace(errorMessage))
-                {
-                    <MudAlert Severity="Severity.Error" Class="my-4">@errorMessage</MudAlert>
-                }
-                @if (successMessage != null)
-                {
-                    <MudAlert Severity="Severity.Success" Class="my-4">@successMessage</MudAlert>
-                }
-
-                <MudButton ButtonType="ButtonType.Submit"
-                           Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           FullWidth="true"
-                           Class="mt-4"
-                           Disabled="isProcessing">
-                    @if (isProcessing)
-                    {
-                        <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
-                        <span>Rejestrowanie...</span>
-                    }
-                    else
-                    {
-                        <span>Zarejestruj</span>
-                    }
-                </MudButton>
-            </EditForm>
-            <MudText Align="Align.Center" Class="mt-3">
-                Masz już konto? <MudLink Href="/login">Zaloguj się</MudLink>
-            </MudText>
-        </MudPaper>
-    </MudItem>
+        <MudButton ButtonType="ButtonType.Submit"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   FullWidth="true"
+                   Class="mt-4"
+                   Disabled="@isProcessing">
+          @(isProcessing ? "Rejestracja…" : "Zarejestruj")
+        </MudButton>
+      </EditForm>
+      <MudText Align="Align.Center" Class="mt-3">
+        Masz już konto? <MudLink Href="/login">Zaloguj się</MudLink>
+      </MudText>
+    </MudPaper>
+  </MudItem>
 </MudGrid>
 
 @code {
-    private RegisterRequestDto registerRequest = new();
-    private string? errorMessage;
-    private string? successMessage;
-    private bool isProcessing = false;
+  private RegisterRequestDto registerRequest = new();
+  private string? errorMessage;
+  private bool isProcessing;
 
-    private async Task HandleRegistration()
+  private async Task HandleRegistration()
+  {
+    isProcessing = true;
+    errorMessage = null;
+    var result = await AuthService.RegisterAsync(registerRequest);
+    if (result.IsSuccess)
+      Snackbar.Add("Rejestracja zakończona pomyślnie!", Severity.Success);
+    else
     {
-        isProcessing = true;
-        errorMessage = null;
-        successMessage = null;
-
-        try
-        {
-            var result = await AuthService.RegisterAsync(registerRequest);
-
-            if (result != null && result.IsSuccess)
-            {
-                successMessage = result.Message ?? "Rejestracja zakończona pomyślnie! Możesz się teraz zalogować.";
-                Snackbar.Add(successMessage, Severity.Success);
-                // Można rozważyć automatyczne przekierowanie do logowania po krótkim czasie
-                // lub pozostawić użytkownika na tej stronie z komunikatem o sukcesie.
-                // Dla uproszczenia, pozostajemy i wyświetlamy komunikat.
-                // Można też wyczyścić formularz: registerRequest = new();
-            }
-            else
-            {
-                errorMessage = result?.Message ?? "Wystąpił błąd podczas rejestracji.";
-                Snackbar.Add(errorMessage, Severity.Error);
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Wystąpił nieoczekiwany błąd: {ex.Message}";
-            Snackbar.Add(errorMessage, Severity.Error, config => { config.ShowCloseIcon = true; });
-            Console.WriteLine($"Registration error: {ex}");
-        }
-        finally
-        {
-            isProcessing = false;
-        }
+      errorMessage = result.Message;
+      Snackbar.Add(errorMessage, Severity.Error);
     }
+    isProcessing = false;
+  }
 }
