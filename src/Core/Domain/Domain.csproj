@@ -7,13 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Reference Include="Microsoft.Extensions.Identity.Stores">
-        <HintPath>..\..\..\..\.nuget\packages\microsoft.extensions.identity.stores\8.0.16\lib\net8.0\Microsoft.Extensions.Identity.Stores.dll</HintPath>
-      </Reference>
+        <Reference Include="Microsoft.Extensions.Identity.Stores">
+            <HintPath>..\..\..\..\.nuget\packages\microsoft.extensions.identity.stores\8.0.16\lib\net8.0\Microsoft.Extensions.Identity.Stores.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.16" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.16"/>
     </ItemGroup>
 
 </Project>

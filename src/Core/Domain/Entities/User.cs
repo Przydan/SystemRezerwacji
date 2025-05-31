@@ -9,5 +9,4 @@ public class User : IdentityUser<Guid>
 
     // Nawigacja do rezerwacji
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
-
 }

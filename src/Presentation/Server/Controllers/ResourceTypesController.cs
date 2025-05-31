@@ -1,4 +1,5 @@
 // Server/Controllers/ResourceTypesController.cs
+
 using MediatR; // Jeśli używasz MediatR
 using Microsoft.AspNetCore.Mvc;
 using Application.Features.ResourceType.Queries.GetAllResourceTypes;

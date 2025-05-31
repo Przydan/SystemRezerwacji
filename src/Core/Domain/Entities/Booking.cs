@@ -10,7 +10,7 @@ public class Booking
     public DateTime BookedAt { get; set; } = DateTime.UtcNow; // Domyślnie czas utworzenia
     public DateTime? LastModifiedAt { get; set; } // Opcjonalne
     public string? Notes { get; set; }
-    
+
     public BookingStatus Status { get; set; } // Enum, który zdefiniujemy
 
     // Klucz obcy i nawigacja do Resource

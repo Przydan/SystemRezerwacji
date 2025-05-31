@@ -1,4 +1,3 @@
-
 using Application.Interfaces.Persistence;
 using MediatR;
 using Shared.DTOs.Resource;
@@ -17,7 +16,8 @@ public class GetAllResourceTypesQueryHandler : IRequestHandler<GetAllResourceTyp
         // _mapper = mapper;
     }
 
-    public async Task<List<ResourceTypeDto>> Handle(GetAllResourceTypesQuery request, CancellationToken cancellationToken)
+    public async Task<List<ResourceTypeDto>> Handle(GetAllResourceTypesQuery request,
+        CancellationToken cancellationToken)
     {
         var resourceTypes = await _resourceTypeRepository.GetAllAsync();
 
@@ -33,6 +33,7 @@ public class GetAllResourceTypesQueryHandler : IRequestHandler<GetAllResourceTyp
                 IconCssClass = rt.IconCssClass
             });
         }
+
         // return _mapper.Map<List<ResourceTypeDto>>(resourceTypes); // Z AutoMapperem
         return resourceTypeDtos;
     }

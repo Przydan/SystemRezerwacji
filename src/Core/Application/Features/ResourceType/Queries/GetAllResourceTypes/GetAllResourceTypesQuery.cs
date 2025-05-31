@@ -1,4 +1,5 @@
 // Application/Features/ResourceType/Queries/GetAllResourceTypes/GetAllResourceTypesQuery.cs
+
 using MediatR;
 using Shared.DTOs.Resource;
 

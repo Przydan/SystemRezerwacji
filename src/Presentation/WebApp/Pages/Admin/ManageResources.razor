@@ -1,8 +1,6 @@
 @page "/admin/resources"
-@attribute [Authorize(Roles = "Administrator")]
-
-@using global::Shared.DTOs.Resource
 @using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
 
 @inject ResourceClientService ResourceService
 @inject IDialogService DialogService
@@ -24,7 +22,7 @@
                   Placeholder="Wyszukaj nazwę..."
                   Adornment="Adornment.End"
                   AdornmentIcon="@Icons.Material.Filled.Search"
-                  Clearable="true" />
+                  Clearable="true"/>
 
     <MudSelect T="Guid?"
                @bind-Value="selectedTypeId"
@@ -39,7 +37,7 @@
     <MudCheckBox T="bool"
                  @bind-Checked="onlyActive"
                  Label="Tylko aktywne"
-                 Class="mx-4" />
+                 Class="mx-4"/>
   </ToolBarContent>
 
   <HeaderContent>
@@ -61,11 +59,11 @@
       <MudIconButton Icon="@Icons.Material.Filled.Edit"
                      Color="Color.Primary"
                      Size="Size.Small"
-                     OnClick="@(() => OpenForm(context))" />
+                     OnClick="@(() => OpenForm(context))"/>
       <MudIconButton Icon="@Icons.Material.Filled.Delete"
                      Color="Color.Error"
                      Size="Size.Small"
-                     OnClick="@(() => ConfirmDelete(context))" />
+                     OnClick="@(() => ConfirmDelete(context))"/>
     </MudTd>
   </RowTemplate>
 </MudTable>
@@ -75,7 +73,7 @@
   <ResourceForm Model="selectedResource"
                 Resources="ResourceTypes"
                 OnCancel="CloseForm"
-                OnSave="OnSaveResource" />
+                OnSave="OnSaveResource"/>
 }
 
 @code {
@@ -99,9 +97,9 @@
   }
 
   private bool FilterFunc(ResourceDto item) =>
-      (string.IsNullOrWhiteSpace(filterName) || (item.Name != null && item.Name.Contains(filterName, StringComparison.OrdinalIgnoreCase)))
-      && (selectedTypeId == null || item.ResourceTypeId == selectedTypeId)
-      && (!onlyActive || item.IsActive);
+    (string.IsNullOrWhiteSpace(filterName) || (item.Name != null && item.Name.Contains(filterName, StringComparison.OrdinalIgnoreCase)))
+    && (selectedTypeId == null || item.ResourceTypeId == selectedTypeId)
+    && (!onlyActive || item.IsActive);
 
   private void OpenForm(ResourceDto? resource)
   {
@@ -134,4 +132,5 @@
       await LoadResources();
     }
   }
+
 }

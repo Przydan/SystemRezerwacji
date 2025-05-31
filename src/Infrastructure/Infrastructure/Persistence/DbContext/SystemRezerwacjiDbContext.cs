@@ -11,7 +11,7 @@ public class SystemRezerwacjiDbContext : IdentityDbContext<User, IdentityRole<Gu
         : base(options)
     {
     }
-    
+
     // DbSet dla każdej z Twoich głównych encji
     public DbSet<Resource> Resources { get; set; }
     public DbSet<ResourceType> ResourceTypes { get; set; }

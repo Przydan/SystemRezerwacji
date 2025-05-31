@@ -1,77 +1,77 @@
-﻿@page "/my-reservations"
-@using global::Shared.DTOs.Booking
-@using WebApp.Services
-@inject BookingService BookingService
+﻿@* Plik: src/Presentation/WebApp/Pages/MyReservationsPage.razor *@
+@page "/my-reservations"
+@using System.Globalization
+@attribute [Authorize]
 
-<h3>Moje rezerwacje</h3>
+@inject IBookingService BookingService
+@inject ISnackbar Snackbar 
+@inject NavigationManager NavigationManager
 
-@if (!string.IsNullOrEmpty(errorMessage))
+<MudText Typo="Typo.h4" GutterBottom="true">Moje Rezerwacje</MudText>
+
+@if (_isLoading)
 {
-    <MudAlert Severity="MudBlazor.Severity.Error" Elevation="0" Dense="true">@errorMessage</MudAlert>
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    <MudText>Ładowanie rezerwacji...</MudText>
 }
-
-@if (bookings == null)
+else if (!string.IsNullOrEmpty(_errorMessage))
 {
-    <MudProgressCircular Indeterminate="true" Size="Size.Medium" />
+    <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
 }
-else if (bookings.Count == 0)
+else if (_myBookings == null || !_myBookings.Any())
 {
-    <p>Brak rezerwacji.</p>
+    <MudText>Nie masz jeszcze żadnych rezerwacji.</MudText>
 }
 else
 {
-    <MudTable Items="@bookings" Hover="true" Bordered="true" Striped="true">
-        <HeaderContent>
-            <MudTh>Nazwa zasobu</MudTh>
-            <MudTh>Od</MudTh>
-            <MudTh>Do</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Akcje</MudTh>
-        </HeaderContent>
-        <RowTemplate Context="booking">
-            <MudTd>@booking.ResourceName</MudTd>
-            <MudTd>@booking.StartTime.ToString("g")</MudTd>
-            <MudTd>@booking.EndTime.ToString("g")</MudTd>
-            <MudTd>@booking.Status</MudTd>
-            <MudTd>
-                @if (booking.Status != "Cancelled")
+    <MudList T="BookingDto" Clickable="true">
+    @for (int i = 0; i < _myBookings.Count; i++)
+    {
+        var booking = _myBookings[i];
+        <MudListItem @key="booking.Id" OnClick="@(() => NavigateToBookingDetails(booking.Id))">
+            <div class="d-flex flex-column">
+                <MudText Typo="Typo.subtitle1"><b>@booking.ResourceName</b></MudText>
+                <MudText Typo="Typo.body2">Od: @booking.StartTime.ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture)</MudText>
+                <MudText Typo="Typo.body2">Do: @booking.EndTime.ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture)</MudText>
+                <MudText Typo="Typo.caption">Status: @booking.Status</MudText>
+                @if(!string.IsNullOrWhiteSpace(booking.Notes))
                 {
-                    <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="@(() => CancelBooking(booking.Id))">
-                        Anuluj
-                    </MudButton>
+                    <MudText Typo="Typo.caption" Class="mt-1"><i>Notatki: @booking.Notes</i></MudText>
                 }
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+            </div>
+        </MudListItem>
+        @if (i < _myBookings.Count - 1)
+        {
+            <MudDivider />
+        }
+    }
+</MudList>
 }
-
 @code {
-    private List<BookingDto>? bookings;
-    private string? errorMessage;
+    private List<BookingDto>? _myBookings;
+    private bool _isLoading = true;
+    private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            bookings = await BookingService.GetMyBookingsAsync();
+            _isLoading = true;
+            _myBookings = await BookingService.GetMyBookingsAsync();
         }
         catch (Exception ex)
         {
-            errorMessage = "Nie udało się załadować listy rezerwacji: " + ex.Message;
+            _errorMessage = $"Wystąpił błąd podczas pobierania rezerwacji: {ex.Message}";
+            Snackbar.Add(_errorMessage, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 
-    private async Task CancelBooking(Guid bookingId)
+    private void NavigateToBookingDetails(Guid bookingId)
     {
-        try
-        {
-            await BookingService.CancelBookingAsync(bookingId);
-            // Po anulowaniu, odśwież listę rezerwacji
-            bookings = await BookingService.GetMyBookingsAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Błąd podczas anulowania rezerwacji: " + ex.Message;
-        }
+        NavigationManager.NavigateTo($"/booking/{bookingId}");
     }
 }

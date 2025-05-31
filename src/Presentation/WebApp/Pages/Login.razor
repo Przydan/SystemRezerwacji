@@ -1,5 +1,5 @@
 @page "/login"
-@using global::Shared.DTOs.Auth
+@using Shared.DTOs.Auth
 @using WebApp.Services
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
@@ -12,22 +12,22 @@
     <MudPaper Class="pa-4" Elevation="3">
       <MudText Typo="Typo.h5" Align="Align.Center">Logowanie</MudText>
       <EditForm Model="@loginRequest" OnValidSubmit="HandleLogin">
-        <DataAnnotationsValidator />
+        <DataAnnotationsValidator/>
 
         <MudTextField T="string"
                       Label="Email"
                       @bind-Value="loginRequest.Email"
                       For="@(() => loginRequest.Email)"
-                      Required="true" />
-        <MudValidationMessage For="@(() => loginRequest.Email)" />
+                      Required="true"/>
+        <MudValidationMessage For="@(() => loginRequest.Email)"/>
 
         <MudTextField T="string"
                       Label="Hasło"
                       InputType="InputType.Password"
                       @bind-Value="loginRequest.Password"
                       For="@(() => loginRequest.Password)"
-                      Required="true" />
-        <MudValidationMessage For="@(() => loginRequest.Password)" />
+                      Required="true"/>
+        <MudValidationMessage For="@(() => loginRequest.Password)"/>
 
         @if (!string.IsNullOrEmpty(errorMessage))
         {
@@ -44,7 +44,8 @@
         </MudButton>
       </EditForm>
       <MudText Align="Align.Center" Class="mt-3">
-        Nie masz konta? <MudLink Href="/register">Zarejestruj się</MudLink>
+        Nie masz konta?
+        <MudLink Href="/register">Zarejestruj się</MudLink>
       </MudText>
     </MudPaper>
   </MudItem>
@@ -70,6 +71,8 @@
       errorMessage = result.Message;
       Snackbar.Add(errorMessage, Severity.Error);
     }
+
     isProcessing = false;
   }
+
 }
