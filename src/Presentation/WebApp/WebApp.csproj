@@ -17,12 +17,13 @@
     <Folder Include="Auth\" />
     <Folder Include="Components\" />
     <Folder Include="Layout\" />
-    <Folder Include="Pages\" />
     <Folder Include="Services\" />
-    <Folder Include="wwwroot\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="wwwroot\_framework\blazor.webassembly.js" />
   </ItemGroup>
 
 

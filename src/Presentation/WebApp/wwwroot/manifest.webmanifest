@@ -1,6 +1,6 @@
 {
-  "name": "SystemRezerwacji.WebApp",
-  "short_name": "SystemRezerwacji.WebApp",
+  "name": "WebApp",
+  "short_name": "WebApp",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
