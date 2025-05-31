@@ -4,8 +4,9 @@ using System.Security.Claims;
 using System.Text.Json;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
-using SystemRezerwacji.WebApp.Auth;
+using SystemRezerwacji.Application.DTOs.Auth;
 using SystemRezerwacji.WebApp.Models;
+
 
 namespace SystemRezerwacji.WebApp.Services
 {

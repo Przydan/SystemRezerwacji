@@ -1,4 +1,4 @@
-namespace SystemRezerwacji.WebApp.Models;
+namespace SystemRezerwacji.Application.DTOs.Auth;
 
 public class AuthResponseDto
 {

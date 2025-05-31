@@ -22,4 +22,7 @@
     <Folder Include="Services\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\SystemRezerwacji.Shared\SystemRezerwacji.Shared.csproj" />
+  </ItemGroup>
 </Project>

@@ -7,7 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\SystemRezerwacji.Shared\SystemRezerwacji.Shared.csproj" />
       <ProjectReference Include="..\SystemRezerwacji.Domain\SystemRezerwacji.Domain.csproj" />
+
     </ItemGroup>
 
     <ItemGroup>

@@ -17,6 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\SystemRezerwacji.Shared\SystemRezerwacji.Shared.csproj" />
       <ProjectReference Include="..\..\Core\SystemRezerwacji.Application\SystemRezerwacji.Application.csproj" />
       <ProjectReference Include="..\..\Infrastructure\SystemRezerwacji.Infrastructure\SystemRezerwacji.Infrastructure.csproj" />
     </ItemGroup>
