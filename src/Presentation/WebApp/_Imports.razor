@@ -5,15 +5,21 @@
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.AspNetCore.Authorization
+// Dla [Authorize] i AuthorizeView
+@using Microsoft.AspNetCore.Components.Authorization
+// Dla AuthenticationStateProvider, CascadingAuthenticationState etc.
 @using Microsoft.JSInterop
-@using MudBlazor 
-@using WebApp 
-@using WebApp.Layout 
-@using WebApp.Components 
-@using WebApp.Auth 
-@using global::Shared.DTOs.Booking
-@using global::Shared.DTOs.Resource
-
-@*
-@using WebApp.Shared // Jeśli używasz starego folderu Shared
-*@
+@using MudBlazor
+@using WebApp
+@using WebApp.Layout
+@using WebApp.Components
+@using WebApp.Auth
+@using WebApp.Services
+// Dla serwisów klienckich
+@using Shared.DTOs.Booking
+// Dla DTOs rezerwacji
+@using Shared.DTOs.Resource
+// Dla DTOs zasobów
+@using Shared.DTOs.Auth
+// Dla DTOs autentykacji

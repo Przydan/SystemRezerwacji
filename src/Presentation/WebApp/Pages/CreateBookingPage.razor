@@ -1,5 +1,4 @@
 ﻿@page "/create-booking"
-@using WebApp.Services
 @inject IResourceService ResourceService
 @inject IBookingService BookingService
 @inject NavigationManager Nav
@@ -8,38 +7,39 @@
 
 @if (resources is null)
 {
-  <p><em>Ładowanie zasobów…</em></p>
+    <p><em>Ładowanie zasobów…</em></p>
 }
 else
 {
-  <BookingForm
-    Model="model"
-    Resources="resources"
-    OnValidSubmit="HandleCreate" />
+    <BookingForm
+        Model="model"
+        Resources="resources"
+        OnValidSubmit="HandleCreate"/>
 }
 
 @code {
-  private BookingRequestDto model = new();
-  private List<ResourceDto>? resources;
+    private BookingRequestDto model = new();
+    private List<ResourceDto>? resources;
 
-  protected override async Task OnInitializedAsync()
-  {
-    resources = await ResourceService.GetResourcesAsync();
-  }
+    protected override async Task OnInitializedAsync()
+    {
+        resources = await ResourceService.GetResourcesAsync();
+    }
 
-  private async Task HandleCreate(BookingRequestDto dto)
-  {
-    try
+    private async Task HandleCreate(BookingRequestDto dto)
     {
-        await BookingService.CreateBookingAsync(dto);
-        Nav.NavigateTo("/my-reservations");
+        try
+        {
+            await BookingService.CreateBookingAsync(dto);
+            Nav.NavigateTo("/my-reservations");
+        }
+        catch (Exception ex)
+        {
+            // Tutaj można dodać obsługę błędów, np.:
+            // ErrorMessage = ex.Message;
+            // StateHasChanged();
+            Console.WriteLine($"Błąd podczas tworzenia rezerwacji: {ex.Message}");
+        }
     }
-    catch (Exception ex)
-    {
-        // Tutaj można dodać obsługę błędów, np.:
-        // ErrorMessage = ex.Message;
-        // StateHasChanged();
-        Console.WriteLine($"Błąd podczas tworzenia rezerwacji: {ex.Message}");
-    }
-}
+
 }

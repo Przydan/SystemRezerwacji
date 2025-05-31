@@ -8,7 +8,7 @@ public class Resource
     public string? Location { get; set; }
     public int? Capacity { get; set; }
     public bool IsActive { get; set; } = true;
-    
+
     public Guid ResourceTypeId { get; set; }
     public ResourceType ResourceType { get; set; }
 

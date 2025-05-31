@@ -1,78 +1,77 @@
-﻿@page "/my-reservations"
-@using WebApp.Services
+﻿@* Plik: src/Presentation/WebApp/Pages/MyReservationsPage.razor *@
+@page "/my-reservations"
+@using System.Globalization
+@attribute [Authorize]
+
 @inject IBookingService BookingService
+@inject ISnackbar Snackbar 
+@inject NavigationManager NavigationManager
 
-<h3>Moje rezerwacje</h3>
+<MudText Typo="Typo.h4" GutterBottom="true">Moje Rezerwacje</MudText>
 
-@if (bookings == null)
+@if (_isLoading)
 {
-    <p><em>Ładowanie...</em></p>
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    <MudText>Ładowanie rezerwacji...</MudText>
 }
-else if (!bookings.Any())
+else if (!string.IsNullOrEmpty(_errorMessage))
 {
-    <p>Brak rezerwacji.</p>
+    <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+}
+else if (_myBookings == null || !_myBookings.Any())
+{
+    <MudText>Nie masz jeszcze żadnych rezerwacji.</MudText>
 }
 else
 {
-    <!-- opcjonalny pasek wyszukiwania -->
-    <MudTextField @bind-Value="filterName"
-                  Placeholder="Wyszukaj zasób..."
-                  Adornment="Adornment.End"
-                  AdornmentIcon="@Icons.Material.Filled.Search"
-                  Clearable="true"
-                  Class="mb-4" />
-
-    <MudTable Items="bookings"
-              Filter="FilterFunc"
-              Hover="true"
-              Bordered="true"
-              Striped="true">
-        <HeaderContent>
-            <MudTh>Zasób</MudTh>
-            <MudTh>Start</MudTh>
-            <MudTh>Koniec</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Akcje</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>@context.ResourceName</MudTd>
-            <MudTd>@context.StartTime.ToString("g")</MudTd>
-            <MudTd>@context.EndTime.ToString("g")</MudTd>
-            <MudTd>@context.Status</MudTd>
-            <MudTd>
-                <MudButton Color="Color.Error"
-                           Variant="Variant.Text"
-                           OnClick="@(() => Cancel(context.Id))">
-                    Anuluj
-                </MudButton>
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+    <MudList T="BookingDto" Clickable="true">
+    @for (int i = 0; i < _myBookings.Count; i++)
+    {
+        var booking = _myBookings[i];
+        <MudListItem @key="booking.Id" OnClick="@(() => NavigateToBookingDetails(booking.Id))">
+            <div class="d-flex flex-column">
+                <MudText Typo="Typo.subtitle1"><b>@booking.ResourceName</b></MudText>
+                <MudText Typo="Typo.body2">Od: @booking.StartTime.ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture)</MudText>
+                <MudText Typo="Typo.body2">Do: @booking.EndTime.ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture)</MudText>
+                <MudText Typo="Typo.caption">Status: @booking.Status</MudText>
+                @if(!string.IsNullOrWhiteSpace(booking.Notes))
+                {
+                    <MudText Typo="Typo.caption" Class="mt-1"><i>Notatki: @booking.Notes</i></MudText>
+                }
+            </div>
+        </MudListItem>
+        @if (i < _myBookings.Count - 1)
+        {
+            <MudDivider />
+        }
+    }
+</MudList>
 }
-
 @code {
-    private List<BookingDto>? bookings;
-    private string filterName = "";
+    private List<BookingDto>? _myBookings;
+    private bool _isLoading = true;
+    private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        bookings = await BookingService.GetMyBookingsAsync();
+        try
+        {
+            _isLoading = true;
+            _myBookings = await BookingService.GetMyBookingsAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Wystąpił błąd podczas pobierania rezerwacji: {ex.Message}";
+            Snackbar.Add(_errorMessage, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
-    /// <summary>
-    /// Zwraca true/false w każdej gałęzi – dzięki temu RazorGenerator nie rypie CS1662
-    /// </summary>
-    private bool FilterFunc(BookingDto b)
+    private void NavigateToBookingDetails(Guid bookingId)
     {
-        // możesz tu dołożyć dowolne inne kryteria filtrowania
-        return string.IsNullOrWhiteSpace(filterName)
-               || b.ResourceName.Contains(filterName, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private async Task Cancel(Guid id)
-    {
-        await BookingService.CancelBookingAsync(id);
-        // odśwież listę po anulowaniu
-        bookings = await BookingService.GetMyBookingsAsync();
+        NavigationManager.NavigateTo($"/booking/{bookingId}");
     }
 }

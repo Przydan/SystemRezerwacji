@@ -9,7 +9,7 @@
 
 @if (resourceTypes == null && isLoading)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
 }
 else if (resourceTypes != null)
 {
@@ -38,10 +38,12 @@ else
     {
         isLoading = true;
         resourceTypes = await ResourceTypeService.GetResourceTypesAsync();
-        if(resourceTypes == null)
+        if (resourceTypes == null)
         {
             Snackbar.Add("Błąd podczas pobierania danych z API.", Severity.Error);
         }
+
         isLoading = false;
     }
+
 }

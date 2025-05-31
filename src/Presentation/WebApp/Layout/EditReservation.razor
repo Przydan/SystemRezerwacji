@@ -1,5 +1,4 @@
 @page "/edit-booking/{id:guid}"
-@using WebApp.Services
 @inject IBookingService BookingService
 @inject IResourceService ResourceService
 @inject NavigationManager Nav
@@ -15,7 +14,7 @@ else
     <BookingForm
         Model="model"
         Resources="resources"
-        OnValidSubmit="HandleUpdate" />
+        OnValidSubmit="HandleUpdate"/>
 }
 
 @code {
@@ -42,9 +41,9 @@ else
         model = new BookingRequestDto
         {
             ResourceId = existing.ResourceId,
-            StartTime  = existing.StartTime,
-            EndTime    = existing.EndTime,
-            Notes      = existing.Notes
+            StartTime = existing.StartTime,
+            EndTime = existing.EndTime,
+            Notes = existing.Notes
         };
     }
 
@@ -53,4 +52,5 @@ else
         await BookingService.UpdateBookingAsync(dto);
         Nav.NavigateTo("/my-reservations");
     }
+
 }

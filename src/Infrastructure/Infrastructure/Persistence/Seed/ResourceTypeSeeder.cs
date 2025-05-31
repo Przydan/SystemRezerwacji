@@ -32,11 +32,31 @@ public class ResourceTypeSeeder
 
             var resourceTypes = new[]
             {
-                new ResourceType { Id = Guid.NewGuid(), Name = "Sala Konferencyjna", Description = "Pomieszczenie do spotkań biznesowych i prezentacji.", IconCssClass = "fas fa-users" },
-                new ResourceType { Id = Guid.NewGuid(), Name = "Sprzęt IT", Description = "Rzutniki, laptopy, monitory, itp.", IconCssClass = "fas fa-laptop-code" },
-                new ResourceType { Id = Guid.NewGuid(), Name = "Pokój Gościnny", Description = "Komfortowy pokój dla gości firmy.", IconCssClass = "fas fa-bed" },
-                new ResourceType { Id = Guid.NewGuid(), Name = "Samochód Służbowy", Description = "Pojazd do użytku służbowego.", IconCssClass = "fas fa-car" },
-                new ResourceType { Id = Guid.NewGuid(), Name = "Biurko Hot Desk", Description = "Stanowisko pracy do wynajęcia na godziny/dni.", IconCssClass = "fas fa-desktop" }
+                new ResourceType
+                {
+                    Id = Guid.NewGuid(), Name = "Sala Konferencyjna",
+                    Description = "Pomieszczenie do spotkań biznesowych i prezentacji.", IconCssClass = "fas fa-users"
+                },
+                new ResourceType
+                {
+                    Id = Guid.NewGuid(), Name = "Sprzęt IT", Description = "Rzutniki, laptopy, monitory, itp.",
+                    IconCssClass = "fas fa-laptop-code"
+                },
+                new ResourceType
+                {
+                    Id = Guid.NewGuid(), Name = "Pokój Gościnny", Description = "Komfortowy pokój dla gości firmy.",
+                    IconCssClass = "fas fa-bed"
+                },
+                new ResourceType
+                {
+                    Id = Guid.NewGuid(), Name = "Samochód Służbowy", Description = "Pojazd do użytku służbowego.",
+                    IconCssClass = "fas fa-car"
+                },
+                new ResourceType
+                {
+                    Id = Guid.NewGuid(), Name = "Biurko Hot Desk",
+                    Description = "Stanowisko pracy do wynajęcia na godziny/dni.", IconCssClass = "fas fa-desktop"
+                }
             };
 
             await context.ResourceTypes.AddRangeAsync(resourceTypes);

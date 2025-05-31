@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Shared.DTOs.Auth;
 
-
 public class LoginUserDto
 {
     [Required(ErrorMessage = "Email jest wymagany.")]

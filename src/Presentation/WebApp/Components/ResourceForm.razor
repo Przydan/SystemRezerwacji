@@ -3,24 +3,24 @@
 
 
 <EditForm Model="Model" OnValidSubmit="HandleValidSubmit">
-  <DataAnnotationsValidator />
+  <DataAnnotationsValidator/>
   <MudPaper Class="pa-4" Elevation="1">
     <MudStack Spacing="3">
 
       <MudTextField @bind-Value="Model.Name"
                     Label="Nazwa"
-                    Required="true" />
+                    Required="true"/>
 
       <MudTextField @bind-Value="Model.Description"
                     Label="Opis"
-                    Lines="4" />
+                    Lines="4"/>
 
       <MudTextField @bind-Value="Model.Location"
-                    Label="Lokalizacja" />
+                    Label="Lokalizacja"/>
 
       <MudNumericField TValue="int"
                        @bind-Value="Model.Capacity"
-                       Label="Pojemność" />
+                       Label="Pojemność"/>
 
       <MudSelect TValue="Guid"
                  @bind-Value="Model.ResourceTypeId"
@@ -33,8 +33,8 @@
 
       <MudCheckBox TValue="bool"
                    @bind-Checked="Model.IsActive"
-                   Label="Aktywny" 
-                   T="bool" />
+                   Label="Aktywny"
+                   T="bool"/>
 
       <div class="mt-4">
         <MudButton Variant="Variant.Filled"

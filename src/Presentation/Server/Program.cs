@@ -17,12 +17,12 @@ namespace Server;
 public class Program
 {
     private const string DefaultDbName = "systemrezerwacji.db";
-    
+
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
         ConfigureServices(builder);
-        
+
         var app = builder.Build();
         await ConfigureApplication(app);
     }
@@ -31,16 +31,16 @@ public class Program
     {
         // Podstawowe usługi
         ConfigureBasicServices(builder);
-        
+
         // Baza danych i Identity
         ConfigureDatabaseAndIdentity(builder);
-        
+
         // Autentykacja i Autoryzacja
         ConfigureAuthenticationAndAuthorization(builder);
-        
+
         // CORS
         ConfigureCorsPolicy(builder);
-        
+
         // Serwisy aplikacyjne
         ConfigureApplicationServices(builder);
     }
@@ -50,7 +50,9 @@ public class Program
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowBlazorApp", policyBuilder =>
-                policyBuilder.WithOrigins(builder.Configuration["WebAppBaseUrl"] ?? "http://localhost:5214") // Pobierz z konfiguracji lub wpisz na stałe dla dewelopmentu
+                policyBuilder
+                    .WithOrigins(builder.Configuration["WebAppBaseUrl"] ??
+                                 "http://localhost:5214") // Pobierz z konfiguracji lub wpisz na stałe dla dewelopmentu
                     .AllowAnyHeader()
                     .AllowAnyMethod());
         });
@@ -65,7 +67,7 @@ public class Program
 
     private static void ConfigureDatabaseAndIdentity(WebApplicationBuilder builder)
     {
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                                ?? $"Data Source={DefaultDbName}";
 
         builder.Services.AddDbContext<SystemRezerwacjiDbContext>(options =>
@@ -98,7 +100,7 @@ public class Program
 
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("RequireAdministratorRole", policy => 
+            options.AddPolicy("RequireAdministratorRole", policy =>
                 policy.RequireRole("Administrator"));
         });
     }
@@ -116,8 +118,9 @@ public class Program
             ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
             ValidAudience = builder.Configuration["JwtSettings:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"] 
-                                       ?? throw new InvalidOperationException("JWT Key not configured in JwtSettings:Key."))),
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]
+                                       ?? throw new InvalidOperationException(
+                                           "JWT Key not configured in JwtSettings:Key."))),
             ClockSkew = TimeSpan.Zero
         };
     }
@@ -127,7 +130,7 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IResourceTypeRepository, ResourceTypeRepository>();
         builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
-        builder.Services.AddMediatR(cfg => 
+        builder.Services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(typeof(GetAllResourceTypesQuery).Assembly));
     }
 
@@ -141,11 +144,11 @@ public class Program
         }
 
         app.UseHttpsRedirection();
-        app.UseCors("AllowBlazorApp"); 
+        app.UseCors("AllowBlazorApp");
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
-        
+
         await app.RunAsync();
     }
 
@@ -153,7 +156,7 @@ public class Program
     {
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
-        
+
         try
         {
             var context = services.GetRequiredService<SystemRezerwacjiDbContext>();

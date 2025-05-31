@@ -19,6 +19,7 @@
 </MudButton>
 
 @code {
+
     // parametr pobrany z trasy
     [Parameter] public Guid id { get; set; }
 
@@ -29,4 +30,5 @@
         // przekierowanie z powrotem do "Moje rezerwacje"
         Nav.NavigateTo("/my-reservations");
     }
+
 }

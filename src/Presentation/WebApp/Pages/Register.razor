@@ -11,30 +11,30 @@
     <MudPaper Class="pa-4" Elevation="3">
       <MudText Typo="Typo.h5" Align="Align.Center">Rejestracja</MudText>
       <EditForm Model="@registerRequest" OnValidSubmit="HandleRegistration">
-        <DataAnnotationsValidator />
+        <DataAnnotationsValidator/>
 
         <MudTextField T="string"
                       Label="Email"
                       @bind-Value="registerRequest.Email"
                       For="@(() => registerRequest.Email)"
-                      Required="true" />
-        <MudValidationMessage For="@(() => registerRequest.Email)" />
+                      Required="true"/>
+        <MudValidationMessage For="@(() => registerRequest.Email)"/>
 
         <MudTextField T="string"
                       Label="Hasło"
                       InputType="InputType.Password"
                       @bind-Value="registerRequest.Password"
                       For="@(() => registerRequest.Password)"
-                      Required="true" />
-        <MudValidationMessage For="@(() => registerRequest.Password)" />
+                      Required="true"/>
+        <MudValidationMessage For="@(() => registerRequest.Password)"/>
 
         <MudTextField T="string"
                       Label="Potwierdź hasło"
                       InputType="InputType.Password"
                       @bind-Value="registerRequest.ConfirmPassword"
                       For="@(() => registerRequest.ConfirmPassword)"
-                      Required="true" />
-        <MudValidationMessage For="@(() => registerRequest.ConfirmPassword)" />
+                      Required="true"/>
+        <MudValidationMessage For="@(() => registerRequest.ConfirmPassword)"/>
 
         @if (!string.IsNullOrEmpty(errorMessage))
         {
@@ -51,7 +51,8 @@
         </MudButton>
       </EditForm>
       <MudText Align="Align.Center" Class="mt-3">
-        Masz już konto? <MudLink Href="/login">Zaloguj się</MudLink>
+        Masz już konto?
+        <MudLink Href="/login">Zaloguj się</MudLink>
       </MudText>
     </MudPaper>
   </MudItem>
@@ -74,6 +75,8 @@
       errorMessage = result.Message;
       Snackbar.Add(errorMessage, Severity.Error);
     }
+
     isProcessing = false;
   }
+
 }
