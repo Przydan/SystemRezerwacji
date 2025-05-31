@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.14"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.14" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.16"/>
+        <PackageReference Include="MudBlazor" Version="8.7.0"/>
+        <PackageReference Include="Blazored.LocalStorage" Version="4.5.0"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.11.0"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="Auth\"/>
+        <Folder Include="Services\"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shared\Shared.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <_ContentIncludedByDefault Remove="wwwroot\_framework\blazor.webassembly.js"/>
+    </ItemGroup>
+
+
+</Project>

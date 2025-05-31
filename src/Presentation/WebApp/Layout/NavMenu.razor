@@ -1,0 +1,32 @@
+﻿@using WebApp.Services
+@inject NavigationManager Nav
+@inject IAuthService AuthService
+
+<MudNavMenu>
+  <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home">Strona główna</MudNavLink>
+
+  <AuthorizeView>
+    <Authorized>
+      <MudNavLink Href="/my-reservations" Icon="@Icons.Material.Filled.BookOnline">
+        Moje rezerwacje
+      </MudNavLink>
+      <MudNavLink OnClick="Logout" Icon="@Icons.Material.Filled.ExitToApp">
+        Wyloguj
+      </MudNavLink>
+    </Authorized>
+    <NotAuthorized>
+      <MudNavLink Href="/login">Zaloguj</MudNavLink>
+      <MudNavLink Href="/register">Zarejestruj</MudNavLink>
+    </NotAuthorized>
+  </AuthorizeView>
+</MudNavMenu>
+
+@code {
+
+  private async Task Logout()
+  {
+    await AuthService.LogoutAsync();
+    Nav.NavigateTo("/");
+  }
+
+}

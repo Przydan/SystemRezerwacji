@@ -1,0 +1,31 @@
+@* @page "/" *@
+@* @inject IResourceService ResourceService *@
+@* *@
+@* <h3>Lista zasobów</h3> *@
+@* *@
+@* @if (items is null) *@
+@* { *@
+@*   <p><em>Ładowanie...</em></p> *@
+@* } *@
+@* else *@
+@* { *@
+@*   <MudGrid> *@
+@*     @foreach (var r in items) *@
+@*     { *@
+@*       <MudItem xs="12" sm="6" md="4"> *@
+@*         <MudCard> *@
+@*           <MudCardContent> *@
+@*             <h4>@r.Name</h4> *@
+@*             <p>@r.Description</p> *@
+@*           </MudCardContent> *@
+@*         </MudCard> *@
+@*       </MudItem> *@
+@*     } *@
+@*   </MudGrid> *@
+@* } *@
+@* *@
+@* @code { *@
+@*   private List<ResourceDto>? items; *@
+@*   protected override async Task OnInitializedAsync() *@
+@*     => items = await ResourceService.GetResourcesAsync(); *@
+@* } *@
