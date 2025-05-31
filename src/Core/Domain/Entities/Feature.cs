@@ -9,5 +9,4 @@ public class Feature
     // Właściwość nawigacyjna do tabeli łączącej ResourceFeature
     // Pokazuje, które zasoby posiadają tę cechę.
     public virtual ICollection<ResourceFeature> ResourceFeatures { get; set; } = new List<ResourceFeature>();
-
 }

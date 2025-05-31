@@ -1,4 +1,5 @@
-﻿@page "/create-booking"
+@namespace WebApp.Layout
+
 @inject IResourceService ResourceService
 @inject IBookingService BookingService
 @inject NavigationManager Nav
@@ -28,18 +29,8 @@ else
 
     private async Task HandleCreate(BookingRequestDto dto)
     {
-        try
-        {
-            await BookingService.CreateBookingAsync(dto);
-            Nav.NavigateTo("/my-reservations");
-        }
-        catch (Exception ex)
-        {
-            // Tutaj można dodać obsługę błędów, np.:
-            // ErrorMessage = ex.Message;
-            // StateHasChanged();
-            Console.WriteLine($"Błąd podczas tworzenia rezerwacji: {ex.Message}");
-        }
+        await BookingService.CreateBookingAsync(dto);
+        Nav.NavigateTo("/my-reservations");
     }
 
 }

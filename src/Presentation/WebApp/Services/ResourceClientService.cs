@@ -14,13 +14,13 @@ public class ResourceClientService
 
     public Task<bool> CreateResourceAsync(ResourceDto dto) =>
         _http.PostAsJsonAsync("/api/resources", dto)
-             .ContinueWith(t => t.Result.IsSuccessStatusCode);
+            .ContinueWith(t => t.Result.IsSuccessStatusCode);
 
     public Task<bool> UpdateResourceAsync(ResourceDto dto) =>
         _http.PutAsJsonAsync($"/api/resources/{dto.Id}", dto)
-             .ContinueWith(t => t.Result.IsSuccessStatusCode);
+            .ContinueWith(t => t.Result.IsSuccessStatusCode);
 
     public Task<bool> DeleteResourceAsync(Guid id) =>
         _http.DeleteAsync($"/api/resources/{id}")
-             .ContinueWith(t => t.Result.IsSuccessStatusCode);
+            .ContinueWith(t => t.Result.IsSuccessStatusCode);
 }

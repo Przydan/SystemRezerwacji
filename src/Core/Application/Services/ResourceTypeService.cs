@@ -30,6 +30,7 @@ public class ResourceTypeService : IResourceTypeService
                 IconCssClass = rt.IconCssClass
             });
         }
+
         return resourceTypeDtos;
     }
 }

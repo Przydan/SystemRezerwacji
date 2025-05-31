@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+
 // Microsoft.Extensions.Configuration i System.IO nie są potrzebne dla tego uproszczonego podejścia
 
 namespace Infrastructure.Persistence.DbContext

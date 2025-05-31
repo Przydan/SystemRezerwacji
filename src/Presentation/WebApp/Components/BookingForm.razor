@@ -1,9 +1,8 @@
-@using Shared.DTOs.Booking
-@using Shared.DTOs.Resource
-@namespace SystemRezerwacji.WebApp.Components
+@namespace WebApp.Components
+
 
 <EditForm Model="Model" OnValidSubmit="Submit">
-  <DataAnnotationsValidator />
+  <DataAnnotationsValidator/>
   <MudPaper Class="pa-4">
     <MudStack Spacing="3">
 
@@ -23,20 +22,20 @@
                      Label="Start rezerwacji"
                      @bind-Value="Model.StartTime"
                      Picker="Picker.DateTime"
-                     Required="true" />
+                     Required="true"/>
 
       <!-- Data i godzina zakończenia -->
       <MudDatePicker T="DateTime"
                      Label="Koniec rezerwacji"
                      @bind-Value="Model.EndTime"
                      Picker="Picker.DateTime"
-                     Required="true" />
+                     Required="true"/>
 
       <!-- Notatki -->
       <MudTextField T="string"
                     Label="Notatki"
                     @bind-Value="Model.Notes"
-                    Lines="3" />
+                    Lines="3"/>
 
       <MudButton Color="Color.Primary"
                  Variant="Variant.Filled"
@@ -54,5 +53,6 @@
   [Parameter] public EventCallback<BookingRequestDto> OnValidSubmit { get; set; }
 
   private async Task Submit() =>
-      await OnValidSubmit.InvokeAsync(Model);
+    await OnValidSubmit.InvokeAsync(Model);
+
 }

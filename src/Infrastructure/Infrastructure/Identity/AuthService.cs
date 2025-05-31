@@ -14,10 +14,10 @@ public class AuthService : IAuthService
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly IConfiguration _configuration;
-    
-    
+
+
     public AuthService(
-        UserManager<User> userManager, 
+        UserManager<User> userManager,
         RoleManager<IdentityRole<Guid>> roleManager,
         IConfiguration configuration)
     {
@@ -31,7 +31,8 @@ public class AuthService : IAuthService
         var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
         if (existingUser != null)
         {
-            return new AuthResponseDto { IsSuccess = false, Message = "Użytkownik o podanym adresie email już istnieje." };
+            return new AuthResponseDto
+                { IsSuccess = false, Message = "Użytkownik o podanym adresie email już istnieje." };
         }
 
         var newUser = new User
@@ -105,8 +106,9 @@ public class AuthService : IAuthService
         }
 
         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-        var tokenValidityInMinutes = int.Parse(_configuration.GetSection("JwtSettings:DurationInMinutes").Value ?? "60");
-            
+        var tokenValidityInMinutes =
+            int.Parse(_configuration.GetSection("JwtSettings:DurationInMinutes").Value ?? "60");
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Issuer = _configuration["JwtSettings:Issuer"],

@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Shared.DTOs.Auth;
 
-
 public class LoginRequestDto
 {
     [Required(ErrorMessage = "Adres email jest wymagany.")]

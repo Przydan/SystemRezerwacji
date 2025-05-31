@@ -22,9 +22,11 @@
 </MudNavMenu>
 
 @code {
+
   private async Task Logout()
   {
     await AuthService.LogoutAsync();
     Nav.NavigateTo("/");
   }
+
 }

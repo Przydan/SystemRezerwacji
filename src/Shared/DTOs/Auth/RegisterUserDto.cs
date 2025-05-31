@@ -19,9 +19,7 @@ public class RegisterUserDto
     [Compare("Password", ErrorMessage = "Hasło i jego potwierdzenie nie są zgodne.")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    [StringLength(50)]
-    public string? FirstName { get; set; }
+    [StringLength(50)] public string? FirstName { get; set; }
 
-    [StringLength(50)]
-    public string? LastName { get; set; }
+    [StringLength(50)] public string? LastName { get; set; }
 }

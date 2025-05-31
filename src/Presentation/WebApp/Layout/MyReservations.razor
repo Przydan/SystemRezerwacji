@@ -1,0 +1,31 @@
+@namespace WebApp.Layout
+
+@inject IBookingService BookingService
+
+<h3>Moje rezerwacje</h3>
+
+@if (bookings is null)
+{
+    <p><em>Ładowanie…</em></p>
+}
+else if (!bookings.Any())
+{
+    <p>Nie masz jeszcze żadnych rezerwacji.</p>
+}
+else
+{
+    @foreach (var b in bookings)
+    {
+        <BookingListItem Item="b"/>
+    }
+}
+
+@code {
+    private List<BookingDto>? bookings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        bookings = await BookingService.GetMyBookingsAsync();
+    }
+
+}
