@@ -1,6 +1,4 @@
 @namespace WebApp.Layout
-@page "/create-booking"
-@using WebApp.Services
 
 @inject IResourceService ResourceService
 @inject IBookingService BookingService
@@ -17,12 +15,12 @@ else
     <BookingForm
         Model="model"
         Resources="resources"
-        OnValidSubmit="HandleCreate" />
+        OnValidSubmit="HandleCreate"/>
 }
 
 @code {
-    private BookingRequestDto   model     = new();
-    private List<ResourceDto>?  resources;
+    private BookingRequestDto model = new();
+    private List<ResourceDto>? resources;
 
     protected override async Task OnInitializedAsync()
     {
@@ -34,4 +32,5 @@ else
         await BookingService.CreateBookingAsync(dto);
         Nav.NavigateTo("/my-reservations");
     }
+
 }

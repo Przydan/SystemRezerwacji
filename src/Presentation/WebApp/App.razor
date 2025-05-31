@@ -1,1 +1,49 @@
-﻿
+﻿@* Plik: src/Presentation/WebApp/App.razor *@
+@* Możesz potrzebować dodatkowych usingów, jeśli ich tam nie ma, np. dla RedirectToLogin *@
+@* @using Microsoft.AspNetCore.Components.Authorization - jeśli nie ma w _Imports.razor *@
+@* @using WebApp.Layout - jeśli nie ma w _Imports.razor *@
+
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @* Możesz tu zostawić swoją logikę lub uprościć na czas testu *@
+                    @if (context.User.Identity?.IsAuthenticated == false)
+                    {
+                        @* <RedirectToLogin /> Jeśli masz taki komponent *@
+                        <p>Nie jesteś zalogowany. <a href="login">Zaloguj się</a></p>
+                    }
+                    else
+                    {
+                        <p>Nie masz uprawnień do wyświetlenia tej strony.</p>
+                    }
+                </NotAuthorized>
+                <Authorizing>
+                    <MudText>Autoryzacja w toku...</MudText>
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Medium"/>
+                </Authorizing>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+        </Found>
+        <NotFound>
+            <PageTitle>Nie znaleziono</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <MudAlert Severity="Severity.Error">Przepraszamy, nic tu nie ma pod tym adresem.</MudAlert>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+@code {
+
+    protected override void OnInitialized()
+    {
+        // ======================= DODAJ TEN LOG =======================
+        Console.WriteLine($"App.razor: OnInitialized CALLED. Timestamp: {DateTime.Now.ToLongTimeString()}");
+        // =============================================================
+        base.OnInitialized();
+    }
+
+}

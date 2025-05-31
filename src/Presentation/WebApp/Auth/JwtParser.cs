@@ -34,7 +34,8 @@ public static class JwtParser
                 actualRoleClaimKeyInToken = ClaimTypes.Role;
             }
 
-            if (!string.IsNullOrEmpty(actualRoleClaimKeyInToken) && keyValuePairs.TryGetValue(actualRoleClaimKeyInToken, out object? rolesValue))
+            if (!string.IsNullOrEmpty(actualRoleClaimKeyInToken) &&
+                keyValuePairs.TryGetValue(actualRoleClaimKeyInToken, out object? rolesValue))
             {
                 if (rolesValue is JsonElement rolesElement)
                 {
@@ -52,8 +53,9 @@ public static class JwtParser
                 }
                 else if (rolesValue is string rolesString) // Obsługa, jeśli wartość jest bezpośrednio stringiem
                 {
-                     claims.Add(new Claim(ClaimTypes.Role, rolesString));
+                    claims.Add(new Claim(ClaimTypes.Role, rolesString));
                 }
+
                 keyValuePairs.Remove(actualRoleClaimKeyInToken); // Usuń przetworzony claim roli
             }
             // --- KONIEC ZMIAN ---
@@ -64,6 +66,7 @@ public static class JwtParser
             // W tym przypadku, jeśli "role" zostało usunięte, to jest ok.
             claims.AddRange(keyValuePairs.Select(kvp => new Claim(kvp.Key, kvp.Value?.ToString() ?? "")));
         }
+
         return claims;
     }
 
@@ -74,6 +77,7 @@ public static class JwtParser
             case 2: base64 += "=="; break;
             case 3: base64 += "="; break;
         }
+
         return Convert.FromBase64String(base64);
     }
 }

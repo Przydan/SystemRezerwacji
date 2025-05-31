@@ -1,7 +1,4 @@
 @namespace WebApp.Layout
-@page "/my-reservations"
-@using WebApp.Services
-
 
 @inject IBookingService BookingService
 
@@ -19,7 +16,7 @@ else
 {
     @foreach (var b in bookings)
     {
-        <BookingListItem Item="b" />
+        <BookingListItem Item="b"/>
     }
 }
 
@@ -30,4 +27,5 @@ else
     {
         bookings = await BookingService.GetMyBookingsAsync();
     }
+
 }

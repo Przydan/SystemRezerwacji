@@ -1,4 +1,5 @@
 // Infrastructure/Persistence/Repositories/ResourceTypeRepository.cs
+
 using Microsoft.EntityFrameworkCore;
 using Application.Interfaces.Persistence;
 using Domain.Entities;
