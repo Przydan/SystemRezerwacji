@@ -1,0 +1,77 @@
+﻿@page "/my-reservations"
+@using global::Shared.DTOs.Booking
+@using WebApp.Services
+@inject BookingService BookingService
+
+<h3>Moje rezerwacje</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="MudBlazor.Severity.Error" Elevation="0" Dense="true">@errorMessage</MudAlert>
+}
+
+@if (bookings == null)
+{
+    <MudProgressCircular Indeterminate="true" Size="Size.Medium" />
+}
+else if (bookings.Count == 0)
+{
+    <p>Brak rezerwacji.</p>
+}
+else
+{
+    <MudTable Items="@bookings" Hover="true" Bordered="true" Striped="true">
+        <HeaderContent>
+            <MudTh>Nazwa zasobu</MudTh>
+            <MudTh>Od</MudTh>
+            <MudTh>Do</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Akcje</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="booking">
+            <MudTd>@booking.ResourceName</MudTd>
+            <MudTd>@booking.StartTime.ToString("g")</MudTd>
+            <MudTd>@booking.EndTime.ToString("g")</MudTd>
+            <MudTd>@booking.Status</MudTd>
+            <MudTd>
+                @if (booking.Status != "Cancelled")
+                {
+                    <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="@(() => CancelBooking(booking.Id))">
+                        Anuluj
+                    </MudButton>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<BookingDto>? bookings;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            bookings = await BookingService.GetMyBookingsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Nie udało się załadować listy rezerwacji: " + ex.Message;
+        }
+    }
+
+    private async Task CancelBooking(Guid bookingId)
+    {
+        try
+        {
+            await BookingService.CancelBookingAsync(bookingId);
+            // Po anulowaniu, odśwież listę rezerwacji
+            bookings = await BookingService.GetMyBookingsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Błąd podczas anulowania rezerwacji: " + ex.Message;
+        }
+    }
+}
