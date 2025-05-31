@@ -15,8 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Auth\" />
-    <Folder Include="Components\" />
-    <Folder Include="Layout\" />
     <Folder Include="Services\" />
   </ItemGroup>
   <ItemGroup>

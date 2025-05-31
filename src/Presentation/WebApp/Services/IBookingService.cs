@@ -7,5 +7,6 @@ namespace WebApp.Services
         Task CreateBookingAsync(BookingRequestDto dto);
         Task<List<BookingDto>> GetMyBookingsAsync();
         Task CancelBookingAsync(Guid bookingId);
+        Task UpdateBookingAsync(BookingRequestDto dto);
     }
 }
