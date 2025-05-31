@@ -1,0 +1,58 @@
+@using Shared.DTOs.Booking
+@using Shared.DTOs.Resource
+@namespace SystemRezerwacji.WebApp.Components
+
+<EditForm Model="Model" OnValidSubmit="Submit">
+  <DataAnnotationsValidator />
+  <MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+
+      <!-- Wybór zasobu -->
+      <MudSelect T="Guid"
+                 Label="Zasób"
+                 @bind-Value="Model.ResourceId"
+                 Required="true">
+        @foreach (var r in Resources)
+        {
+          <MudSelectItem Value="@r.Id">@r.Name</MudSelectItem>
+        }
+      </MudSelect>
+
+      <!-- Data i godzina rozpoczęcia -->
+      <MudDatePicker T="DateTime"
+                     Label="Start rezerwacji"
+                     @bind-Value="Model.StartTime"
+                     Picker="Picker.DateTime"
+                     Required="true" />
+
+      <!-- Data i godzina zakończenia -->
+      <MudDatePicker T="DateTime"
+                     Label="Koniec rezerwacji"
+                     @bind-Value="Model.EndTime"
+                     Picker="Picker.DateTime"
+                     Required="true" />
+
+      <!-- Notatki -->
+      <MudTextField T="string"
+                    Label="Notatki"
+                    @bind-Value="Model.Notes"
+                    Lines="3" />
+
+      <MudButton Color="Color.Primary"
+                 Variant="Variant.Filled"
+                 ButtonType="ButtonType.Submit">
+        Zapisz
+      </MudButton>
+
+    </MudStack>
+  </MudPaper>
+</EditForm>
+
+@code {
+  [Parameter] public BookingRequestDto Model { get; set; } = new();
+  [Parameter] public IEnumerable<ResourceDto> Resources { get; set; } = Array.Empty<ResourceDto>();
+  [Parameter] public EventCallback<BookingRequestDto> OnValidSubmit { get; set; }
+
+  private async Task Submit() =>
+      await OnValidSubmit.InvokeAsync(Model);
+}
