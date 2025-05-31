@@ -37,5 +37,10 @@ namespace WebApp.Services
                 throw new Exception($"CancelBooking failed: {response.StatusCode} – {error}");
             }
         }
+
+        public Task UpdateBookingAsync(BookingRequestDto dto)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

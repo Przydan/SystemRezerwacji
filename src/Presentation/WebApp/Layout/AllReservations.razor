@@ -1,0 +1,59 @@
+@page "/edit-booking/{id:guid}"
+@using WebApp.Services
+
+@inject IBookingService BookingService
+@inject IResourceService ResourceService
+@inject NavigationManager Nav
+
+<h3>Edytuj rezerwację</h3>
+
+@if (model is null || resources is null)
+{
+    <p><em>Ładowanie…</em></p>
+}
+else
+{
+    <BookingForm
+        Model="model"
+        Resources="resources"
+        OnValidSubmit="HandleUpdate" />
+}
+
+@code {
+    [Parameter] public Guid id { get; set; }
+
+    private BookingRequestDto? model;
+    private List<ResourceDto>? resources;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Pobierz listę zasobów
+        resources = await ResourceService.GetResourcesAsync();
+
+        // 2. Pobierz swoją listę rezerwacji i znajdź tę z przekazanym id
+        var all = await BookingService.GetMyBookingsAsync();
+        var existing = all.FirstOrDefault(x => x.Id == id);
+        if (existing == null)
+        {
+            // brak rezerwacji o tym id? wróć do listy
+            Nav.NavigateTo("/my-reservations");
+            return;
+        }
+
+        // 3. Przemapuj do BookingRequestDto (ten sam model, którego używa BookingForm)
+        model = new BookingRequestDto
+        {
+            ResourceId = existing.ResourceId,
+            StartTime = existing.StartTime,
+            EndTime = existing.EndTime,
+            Notes = existing.Notes
+        };
+    }
+
+    private async Task HandleUpdate(BookingRequestDto dto)
+    {
+        // zakładam, że BookingService ma metodę UpdateBookingAsync
+        await BookingService.UpdateBookingAsync(dto);
+        Nav.NavigateTo("/my-reservations");
+    }
+}
