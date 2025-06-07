@@ -2,9 +2,14 @@
 
 using Shared.DTOs.Resource;
 
-namespace Application.Services;
-
-public interface IResourceTypeService
+namespace Application.Interfaces.Persistence
 {
-    Task<List<ResourceTypeDto>> GetAllResourceTypesAsync();
+    public interface IResourceTypeService
+    {
+        Task<List<ResourceTypeDto>> GetAllResourceTypesAsync();
+        Task<ResourceTypeDto?> GetResourceTypeByIdAsync(Guid id); // Zwracamy nullable DTO
+        Task<ResourceTypeDto> CreateResourceTypeAsync(CreateResourceTypeRequestDto createDto);
+        Task<bool> UpdateResourceTypeAsync(Guid id, UpdateResourceTypeRequestDto updateDto); // Zwracamy bool dla sukcesu
+        Task<bool> DeleteResourceTypeAsync(Guid id); // Zwracamy bool dla sukcesu
+    }
 }
