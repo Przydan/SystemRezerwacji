@@ -1,5 +1,4 @@
 using System.Text;
-using Application.Features.ResourceType.Queries.GetAllResourceTypes;
 using Application.Interfaces.Identity;
 using Application.Interfaces.Persistence;
 using Application.Services;
@@ -62,6 +61,7 @@ public class Program
     {
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile).Assembly);
         builder.Services.AddSwaggerGen();
     }
 
@@ -130,8 +130,6 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IResourceTypeRepository, ResourceTypeRepository>();
         builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
-        builder.Services.AddMediatR(cfg =>
-            cfg.RegisterServicesFromAssembly(typeof(GetAllResourceTypesQuery).Assembly));
     }
 
     private static async Task ConfigureApplication(WebApplication app)
