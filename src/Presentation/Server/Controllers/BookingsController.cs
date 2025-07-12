@@ -1,3 +1,4 @@
+using Application.Interfaces.Booking; // Dodaj ten using
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -7,66 +8,38 @@ namespace Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Większość metod w tym kontrolerze prawdopodobnie będzie wymagać autoryzacji
+    [Authorize]
     public class BookingsController : ControllerBase
     {
-        // Przykład wstrzyknięcia serwisu aplikacyjnego (dostosuj do swojej architektury)
-        // private readonly IBookingApplicationService _bookingAppService;
-        // public BookingsController(IBookingApplicationService bookingAppService)
-        // {
-        //     _bookingAppService = bookingAppService;
-        // }
+        private readonly IBookingService _bookingService; // Pole do przechowywania serwisu
 
-        [HttpGet("my")] // Definiuje ścieżkę GET api/bookings/my
+        // Wstrzyknięcie serwisu przez konstruktor
+        public BookingsController(IBookingService bookingService)
+        {
+            _bookingService = bookingService;
+        }
+
+        [HttpGet("my")]
         [ProducesResponseType(typeof(List<BookingDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)] // Jeśli użytkownik nie ma rezerwacji lub błąd
         public async Task<ActionResult<List<BookingDto>>> GetMyBookings()
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+            var userId = GetUserIdFromToken();
+            if (userId == Guid.Empty)
             {
-                // Ten błąd nie powinien wystąpić, jeśli jest [Authorize], ale dla pewności
                 return Unauthorized("User ID not found in token.");
             }
 
-            Console.WriteLine($"API Endpoint: GetMyBookings called for User ID: {userId}"); // Log serwera
-
-            // TODO: Zaimplementuj logikę pobierania rezerwacji dla 'userId'
-            // Przykład z użyciem hipotetycznego serwisu aplikacyjnego:
-            // var bookings = await _bookingAppService.GetBookingsForUserAsync(userId);
-            // if (bookings == null) // Lub jeśli serwis rzuca wyjątek, który jest tu łapany
-            // {
-            //     return NotFound("No bookings found for the user or error occurred.");
-            // }
-            // return Ok(bookings);
-
-            // ---- TYMCZASOWA ODPOWIEDŹ DLA TESTÓW KLIENTA (Zastąp powyższą logiką) ----
-            // Zwróć pustą listę, aby klient nie dostawał 404, dopóki nie zaimplementujesz logiki.
-            // Po implementacji usuń tę tymczasową odpowiedź.
-            var dummyBookings = new List<BookingDto>
-            {
-                new BookingDto
-                {
-                    Id = Guid.NewGuid(), ResourceName = "Zasób Testowy 1 (z API)",
-                    StartTime = DateTime.UtcNow.AddHours(2), EndTime = DateTime.UtcNow.AddHours(3),
-                    Status = "Confirmed", UserName = "Test User API", UserId = userId, ResourceId = Guid.NewGuid()
-                },
-                new BookingDto
-                {
-                    Id = Guid.NewGuid(), ResourceName = "Zasób Testowy 2 (z API)",
-                    StartTime = DateTime.UtcNow.AddDays(1), EndTime = DateTime.UtcNow.AddDays(1).AddHours(1),
-                    Status = "PendingApproval", UserName = "Test User API", UserId = userId, ResourceId = Guid.NewGuid()
-                }
-            };
-            return Ok(dummyBookings);
-            // ---- KONIEC TYMCZASOWEJ ODPOWIEDZI ----
+            // Jedna linia, która robi całą magię!
+            var bookings = await _bookingService.GetUserBookingsAsync(userId);
+            
+            return Ok(bookings);
         }
 
-        // Tutaj inne metody kontrolera, np. POST api/bookings do tworzenia rezerwacji
         [HttpPost]
         [ProducesResponseType(typeof(BookingDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)] // Nowy kod odpowiedzi dla konfliktu
         public async Task<ActionResult<BookingDto>> CreateBooking([FromBody] BookingRequestDto bookingRequest)
         {
             if (!ModelState.IsValid)
@@ -74,33 +47,108 @@ namespace Server.Controllers
                 return BadRequest(ModelState);
             }
 
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+            var userId = GetUserIdFromToken();
+            if (userId == Guid.Empty)
             {
                 return Unauthorized("User ID not found in token.");
             }
 
-            Console.WriteLine(
-                $"API Endpoint: CreateBooking called by User ID: {userId} for Resource ID: {bookingRequest.ResourceId}");
+            var createdBooking = await _bookingService.CreateBookingAsync(bookingRequest, userId);
 
-            // TODO: Logika tworzenia rezerwacji w serwisie aplikacyjnym
-            // BookingDto createdBooking = await _bookingAppService.CreateBookingAsync(bookingRequest, userId);
-            // return CreatedAtAction(nameof(GetBookingById), new { id = createdBooking.Id }, createdBooking); // Załóżmy, że masz GetBookingById
-
-            // ---- TYMCZASOWA ODPOWIEDŹ DLA TESTÓW KLIENTA ----
-            var dummyCreatedBooking = new BookingDto
+            if (createdBooking == null)
             {
-                Id = Guid.NewGuid(),
-                ResourceId = bookingRequest.ResourceId,
-                UserId = userId,
-                ResourceName = "Zasób X (API)",
-                UserName = "Użytkownik Y (API)",
-                StartTime = bookingRequest.StartTime,
-                EndTime = bookingRequest.EndTime,
-                Status = "Confirmed",
-                Notes = bookingRequest.Notes
-            };
-            return Ok(dummyCreatedBooking); // Prostsze na razie
+                // Serwis zwrócił null, co oznacza konflikt terminów.
+                return Conflict(new { message = "The selected time slot is already booked." });
+            }
+            
+            return CreatedAtAction(nameof(GetBookingById), new { bookingId = createdBooking.Id }, createdBooking);
+
+        }
+        
+        [HttpDelete("{bookingId:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CancelBooking(Guid bookingId)
+        {
+            var userId = GetUserIdFromToken();
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+
+            var success = await _bookingService.CancelBookingAsync(bookingId, userId);
+
+            if (!success)
+            {
+                // Jeśli serwis zwrócił false, oznacza to, że rezerwacji nie znaleziono
+                // lub nie należy ona do tego użytkownika. Zwracamy 404 Not Found dla bezpieczeństwa.
+                return NotFound();
+            }
+
+            // Zgodnie ze standardem REST, operacja DELETE, która się powiodła,
+            // powinna zwrócić status 204 No Content.
+            return NoContent();
+        }
+        
+        [HttpGet("{bookingId:guid}", Name = "GetBookingById")]
+        [ProducesResponseType(typeof(BookingDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<BookingDto>> GetBookingById(Guid bookingId)
+        {
+            var userId = GetUserIdFromToken();
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+
+            var booking = await _bookingService.GetBookingByIdAsync(bookingId, userId);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(booking);
+        }
+        
+        [HttpPut("{bookingId:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> UpdateBooking(Guid bookingId, [FromBody] UpdateBookingRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = GetUserIdFromToken();
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+
+            var success = await _bookingService.UpdateBookingAsync(bookingId, request, userId);
+
+            if (!success)
+            {
+                // Jeśli serwis zwrócił false, może to oznaczać, że rezerwacji nie znaleziono
+                // lub wystąpił konflikt. Zwracamy ogólny błąd 404/409.
+                // Dla uproszczenia zwrócimy NotFound.
+                return NotFound(new { message = "Booking not found or update resulted in a conflict." });
+            }
+
+            // Operacja PUT, która się powiodła, powinna zwrócić status 204 No Content.
+            return NoContent();
+        }
+
+        private Guid GetUserIdFromToken()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid.TryParse(userIdString, out var userId);
+            return userId;
         }
     }
 }

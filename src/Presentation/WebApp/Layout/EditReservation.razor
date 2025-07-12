@@ -47,10 +47,6 @@ else
         };
     }
 
-    private async Task HandleUpdate(BookingRequestDto dto)
-    {
-        await BookingService.UpdateBookingAsync(dto);
-        Nav.NavigateTo("/my-reservations");
-    }
+
 
 }

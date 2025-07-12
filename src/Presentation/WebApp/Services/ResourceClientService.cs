@@ -1,16 +1,18 @@
 using System.Net.Http.Json;
 using Shared.DTOs.Resource;
 
+namespace WebApp.Services;
+
 public class ResourceClientService
 {
     private readonly HttpClient _http;
     public ResourceClientService(HttpClient http) => _http = http;
 
-    public Task<List<ResourceDto>> GetResourcesAsync() =>
+    public Task<List<ResourceDto>?> GetResourcesAsync() =>
         _http.GetFromJsonAsync<List<ResourceDto>>("/api/resources");
 
-    public Task<List<ResourceTypeDto>> GetResourceTypesAsync() =>
-        _http.GetFromJsonAsync<List<ResourceTypeDto>>("/api/resourcetypes");
+    public Task<List<ResourceTypeDto>?> GetResourceTypesAsync() =>
+        _http.GetFromJsonAsync<List<ResourceTypeDto>>("/api/resource-types");
 
     public Task<bool> CreateResourceAsync(ResourceDto dto) =>
         _http.PostAsJsonAsync("/api/resources", dto)

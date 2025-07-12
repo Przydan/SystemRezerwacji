@@ -33,7 +33,23 @@
 </div>
 
 <script src="_content/MudBlazor/MudBlazor.min.js"></script>
-<script src="_framework/blazor.webassembly.js"></script>
+<script src="_framework/blazor.webassembly.js" autostart="false"></script>
+
+<script>
+    Blazor.start({
+        loadBootResource: function (type, name, defaultUri, integrity) {
+            // Dla kluczowych skryptów .NET zwracamy po prostu ich adres URL.
+            if (type === 'dotnetjs' || type === 'dotnetwasm') {
+                return defaultUri;
+            }
+            // Dla pozostałych zasobów (np. .dll) używamy fetch, aby kontrolować cache.
+            return fetch(defaultUri, {
+                cache: 'no-cache',
+                integrity: integrity
+            });
+        }
+    });
+</script>
 <script>navigator.serviceWorker.register('service-worker.js');</script>
 </body>
 
