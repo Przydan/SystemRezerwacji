@@ -1,45 +1,30 @@
-﻿@page "/create-booking"
-@inject IResourceService ResourceService
+﻿@page "/bookings/new"
+@attribute [Authorize]
 @inject IBookingService BookingService
-@inject NavigationManager Nav
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
-<h3>Nowa rezerwacja</h3>
+<h3>Nowa Rezerwacja</h3>
 
-@if (resources is null)
-{
-    <p><em>Ładowanie zasobów…</em></p>
-}
-else
-{
-    <BookingForm
-        Model="model"
-        Resources="resources"
-        OnValidSubmit="HandleCreate"/>
-}
+<BookingForm Model="newBooking" OnValidSubmit="HandleCreateBooking" ButtonText="Utwórz Rezerwację" />
 
 @code {
-    private BookingRequestDto model = new();
-    private List<ResourceDto>? resources;
+    private BookingRequestDto newBooking = new();
 
-    protected override async Task OnInitializedAsync()
+    private async Task HandleCreateBooking()
     {
-        resources = await ResourceService.GetResourcesAsync();
-    }
+        // TODO: Na razie hardkodujemy ID zasobu. Docelowo będzie wybierany z listy.
+        newBooking.ResourceId = Guid.Parse("TUTAJ_WKLEJ_ID_ZASOBU_Z_BAZY_DANYCH"); // <--- WAŻNE
 
-    private async Task HandleCreate(BookingRequestDto dto)
-    {
-        try
+        var result = await BookingService.CreateBookingAsync(newBooking);
+        if (result != null)
         {
-            await BookingService.CreateBookingAsync(dto);
-            Nav.NavigateTo("/my-reservations");
+            Snackbar.Add("Rezerwacja została utworzona!", Severity.Success);
+            NavigationManager.NavigateTo("/my-reservations");
         }
-        catch (Exception ex)
+        else
         {
-            // Tutaj można dodać obsługę błędów, np.:
-            // ErrorMessage = ex.Message;
-            // StateHasChanged();
-            Console.WriteLine($"Błąd podczas tworzenia rezerwacji: {ex.Message}");
+            Snackbar.Add("Nie udało się utworzyć rezerwacji (konflikt terminów?).", Severity.Error);
         }
     }
-
 }

@@ -1,46 +1,51 @@
 ﻿using System.Net.Http.Json;
 using Shared.DTOs.Booking;
 
-namespace WebApp.Services
+namespace WebApp.Services;
+
+public class BookingService : IBookingService
 {
-    public class BookingService : IBookingService
+    private readonly HttpClient _httpClient;
+
+    public BookingService(HttpClient httpClient)
     {
-        private readonly HttpClient _httpClient;
+        _httpClient = httpClient;
+    }
 
-        public BookingService(HttpClient httpClient)
+    public async Task<List<BookingDto>?> GetMyBookingsAsync()
+    {
+        try
         {
-            _httpClient = httpClient;
+            return await _httpClient.GetFromJsonAsync<List<BookingDto>>("api/bookings/my");
         }
+        catch { return null; }
+    }
 
-        public async Task CreateBookingAsync(BookingRequestDto dto)
+    public async Task<BookingDto?> GetBookingByIdAsync(Guid bookingId)
+    {
+        try
         {
-            var response = await _httpClient.PostAsJsonAsync("api/bookings", dto);
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"CreateBooking failed: {response.StatusCode} – {error}");
-            }
+            return await _httpClient.GetFromJsonAsync<BookingDto>($"api/bookings/{bookingId}");
         }
+        catch { return null; }
+    }
 
-        public async Task<List<BookingDto>> GetMyBookingsAsync()
-        {
-            var bookings = await _httpClient.GetFromJsonAsync<List<BookingDto>>("api/bookings/my");
-            return bookings ?? new List<BookingDto>();
-        }
+    public async Task<BookingDto?> CreateBookingAsync(BookingRequestDto request)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/bookings", request);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<BookingDto>();
+    }
 
-        public async Task CancelBookingAsync(Guid bookingId)
-        {
-            var response = await _httpClient.PostAsync($"api/bookings/{bookingId}/cancel", null);
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"CancelBooking failed: {response.StatusCode} – {error}");
-            }
-        }
+    public async Task<bool> UpdateBookingAsync(Guid bookingId, UpdateBookingRequestDto request)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/bookings/{bookingId}", request);
+        return response.IsSuccessStatusCode;
+    }
 
-        public Task UpdateBookingAsync(BookingRequestDto dto)
-        {
-            throw new NotImplementedException();
-        }
+    public async Task<bool> CancelBookingAsync(Guid bookingId)
+    {
+        var response = await _httpClient.DeleteAsync($"api/bookings/{bookingId}");
+        return response.IsSuccessStatusCode;
     }
 }

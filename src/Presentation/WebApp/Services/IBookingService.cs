@@ -1,12 +1,12 @@
 using Shared.DTOs.Booking;
 
-namespace WebApp.Services
+namespace WebApp.Services;
+
+public interface IBookingService
 {
-    public interface IBookingService
-    {
-        Task CreateBookingAsync(BookingRequestDto dto);
-        Task<List<BookingDto>> GetMyBookingsAsync();
-        Task CancelBookingAsync(Guid bookingId);
-        Task UpdateBookingAsync(BookingRequestDto dto);
-    }
+    Task<List<BookingDto>?> GetMyBookingsAsync();
+    Task<BookingDto?> GetBookingByIdAsync(Guid bookingId);
+    Task<BookingDto?> CreateBookingAsync(BookingRequestDto request);
+    Task<bool> UpdateBookingAsync(Guid bookingId, UpdateBookingRequestDto request);
+    Task<bool> CancelBookingAsync(Guid bookingId);
 }

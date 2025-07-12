@@ -1,8 +1,64 @@
-model = new BookingRequestDto
+@page "/bookings/edit/{BookingId:guid}"
+@attribute [Authorize]
+@inject IBookingService BookingService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<h3>Edytuj Rezerwację</h3>
+
+@if (bookingRequest == null)
 {
-Id = existing.Id,
-ResourceId = existing.ResourceId,
-StartTime = existing.StartTime,
-EndTime = existing.EndTime,
-Notes = existing.Notes
-};
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <BookingForm Model="bookingRequest" OnValidSubmit="HandleUpdateBooking" ButtonText="Zapisz Zmiany" />
+}
+
+
+@code {
+    [Parameter]
+    public Guid BookingId { get; set; }
+
+    private BookingRequestDto? bookingRequest;
+    private UpdateBookingRequestDto updateRequest = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var bookingDto = await BookingService.GetBookingByIdAsync(BookingId);
+        if (bookingDto == null)
+        {
+            Snackbar.Add("Nie znaleziono rezerwacji.", Severity.Error);
+            NavigationManager.NavigateTo("/my-reservations");
+            return;
+        }
+
+        // Konwertujemy DTO odczytu na DTO zapisu dla naszego formularza
+        bookingRequest = new BookingRequestDto
+        {
+            ResourceId = bookingDto.ResourceId,
+            StartTime = bookingDto.StartTime,
+            EndTime = bookingDto.EndTime,
+            Notes = bookingDto.Notes
+        };
+    }
+
+    private async Task HandleUpdateBooking(BookingRequestDto updatedBooking)
+    {
+        // Przygotowujemy DTO do aktualizacji
+        updateRequest.StartTime = updatedBooking.StartTime!.Value;
+        updateRequest.EndTime = updatedBooking.EndTime!.Value;
+        updateRequest.Notes = updatedBooking.Notes;
+
+        var success = await BookingService.UpdateBookingAsync(BookingId, updateRequest);
+        if (success)
+        {
+            Snackbar.Add("Rezerwacja została zaktualizowana.", Severity.Success);
+            NavigationManager.NavigateTo("/my-reservations");
+        }
+        else
+        {
+            Snackbar.Add("Nie udało się zaktualizować rezerwacji (konflikt terminów?).", Severity.Error);
+        }
+    }
+}
