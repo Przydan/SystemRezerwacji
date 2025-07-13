@@ -1,76 +1,76 @@
-@using WebApp.Services
-@namespace WebApp.Components
-
-
-<EditForm Model="Model" OnValidSubmit="HandleValidSubmit">
-  <DataAnnotationsValidator/>
-  <MudPaper Class="pa-4" Elevation="1">
-    <MudStack Spacing="3">
-
-      <MudTextField @bind-Value="Model.Name"
-                    Label="Nazwa"
-                    Required="true"/>
-
-      <MudTextField @bind-Value="Model.Description"
-                    Label="Opis"
-                    Lines="4"/>
-
-      <MudTextField @bind-Value="Model.Location"
-                    Label="Lokalizacja"/>
-
-      <MudNumericField TValue="int"
-                       @bind-Value="Model.Capacity"
-                       Label="Pojemność"/>
-
-      <MudSelect TValue="Guid"
-                 @bind-Value="Model.ResourceTypeId"
-                 Label="Typ zasobu">
-        @foreach (var type in ResourceTypes)
-        {
-          <MudSelectItem Value="@type.Id">@type.Name</MudSelectItem>
-        }
-      </MudSelect>
-
-      <MudCheckBox TValue="bool"
-                   @bind-Checked="Model.IsActive"
-                   Label="Aktywny"
-                   T="bool"/>
-
-      <div class="mt-4">
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   ButtonType="ButtonType.Submit">
-          Zapisz
-        </MudButton>
-        <MudButton Variant="Variant.Text"
-                   Color="Color.Secondary"
-                   OnClick="Cancel"
-                   Class="ml-2">
-          Anuluj
-        </MudButton>
-      </div>
-
-    </MudStack>
-  </MudPaper>
-</EditForm>
-
-@code {
-  [Parameter] public ResourceDto Model { get; set; } = new();
-  [Parameter] public List<ResourceTypeDto> ResourceTypes { get; set; } = new();
-  [Parameter] public EventCallback OnCancel { get; set; }
-  [Parameter] public EventCallback<ResourceDto> OnSave { get; set; }
-
-  [Inject] public IResourceService ResourceService { get; set; } = default!;
-
-  private async Task HandleValidSubmit()
-  {
-    if (Model.Id == Guid.Empty)
-      await ResourceService.CreateResourceAsync(Model);
-    else
-      await ResourceService.UpdateResourceAsync(Model);
-
-    await OnSave.InvokeAsync(Model);
-  }
-
-  private Task Cancel() => OnCancel.InvokeAsync();
-}
+@* @using WebApp.Services *@
+@* @namespace WebApp.Components *@
+@* *@
+@* *@
+@* <EditForm Model="Model" OnValidSubmit="HandleValidSubmit"> *@
+@*   <DataAnnotationsValidator/> *@
+@*   <MudPaper Class="pa-4" Elevation="1"> *@
+@*     <MudStack Spacing="3"> *@
+@* *@
+@*       <MudTextField @bind-Value="Model.Name" *@
+@*                     Label="Nazwa" *@
+@*                     Required="true"/> *@
+@* *@
+@*       <MudTextField @bind-Value="Model.Description" *@
+@*                     Label="Opis" *@
+@*                     Lines="4"/> *@
+@* *@
+@*       <MudTextField @bind-Value="Model.Location" *@
+@*                     Label="Lokalizacja"/> *@
+@* *@
+@*       <MudNumericField TValue="int" *@
+@*                        @bind-Value="Model.Capacity" *@
+@*                        Label="Pojemność"/> *@
+@* *@
+@*       <MudSelect TValue="Guid" *@
+@*                  @bind-Value="Model.ResourceTypeId" *@
+@*                  Label="Typ zasobu"> *@
+@*         @foreach (var type in ResourceTypes) *@
+@*         { *@
+@*           <MudSelectItem Value="@type.Id">@type.Name</MudSelectItem> *@
+@*         } *@
+@*       </MudSelect> *@
+@* *@
+@*       <MudCheckBox TValue="bool" *@
+@*                    @bind-Checked="Model.IsActive" *@
+@*                    Label="Aktywny" *@
+@*                    T="bool"/> *@
+@* *@
+@*       <div class="mt-4"> *@
+@*         <MudButton Variant="Variant.Filled" *@
+@*                    Color="Color.Primary" *@
+@*                    ButtonType="ButtonType.Submit"> *@
+@*           Zapisz *@
+@*         </MudButton> *@
+@*         <MudButton Variant="Variant.Text" *@
+@*                    Color="Color.Secondary" *@
+@*                    OnClick="Cancel" *@
+@*                    Class="ml-2"> *@
+@*           Anuluj *@
+@*         </MudButton> *@
+@*       </div> *@
+@* *@
+@*     </MudStack> *@
+@*   </MudPaper> *@
+@* </EditForm> *@
+@* *@
+@* @code { *@
+@*   [Parameter] public ResourceDto Model { get; set; } = new(); *@
+@*   [Parameter] public List<ResourceTypeDto> ResourceTypes { get; set; } = new(); *@
+@*   [Parameter] public EventCallback OnCancel { get; set; } *@
+@*   [Parameter] public EventCallback<ResourceDto> OnSave { get; set; } *@
+@* *@
+@*   [Inject] public IResourceService ResourceService { get; set; } = default!; *@
+@* *@
+@*   private async Task HandleValidSubmit() *@
+@*   { *@
+@*     if (Model.Id == Guid.Empty) *@
+@*       await ResourceService.CreateResourceAsync(Model); *@
+@*     else *@
+@*       await ResourceService.UpdateResourceAsync(Model); *@
+@* *@
+@*     await OnSave.InvokeAsync(Model); *@
+@*   } *@
+@* *@
+@*   private Task Cancel() => OnCancel.InvokeAsync(); *@
+@* } *@

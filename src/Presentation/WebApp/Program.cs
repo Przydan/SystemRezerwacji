@@ -5,8 +5,7 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using WebApp.Auth;
 using WebApp.Services;
-
-// Dodaj ten using dla DateTime
+using IResourceService = WebApp.Services.IResourceService;
 
 namespace WebApp
 {
@@ -77,7 +76,7 @@ namespace WebApp
 
             builder.Services.AddScoped<IResourceService, ResourceService>();
             builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
-            builder.Services.AddScoped<IBookingService, BookingService>();
+            // builder.Services.AddScoped<IBookingService, BookingService>();
             Console.WriteLine("WebApp Program.Main: Application services registered.");
 
             Console.WriteLine("WebApp Program.Main: Building host...");

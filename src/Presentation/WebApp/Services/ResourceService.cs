@@ -1,35 +1,29 @@
 using System.Net.Http.Json;
 using Shared.DTOs.Resource;
+using WebApp.Services;
 
-namespace WebApp.Services
+public class ResourceService : IResourceService
 {
-    public interface IResourceService
+    private readonly HttpClient _http;
+    public ResourceService(HttpClient http) => _http = http;
+
+    public async Task<List<ResourceDto>> GetResourcesAsync()
     {
-        Task<List<ResourceDto>> GetResourcesAsync();
-        Task CreateResourceAsync(ResourceDto model);
-        Task UpdateResourceAsync(ResourceDto model);
+        var list = await _http.GetFromJsonAsync<List<ResourceDto>>("api/resources");
+        return list ?? new List<ResourceDto>();
     }
 
-    public class ResourceService : IResourceService
+    // Uzupełniona metoda
+    public async Task CreateResourceAsync(CreateResourceRequestDto model)
     {
-        private readonly HttpClient _http;
-        public ResourceService(HttpClient http) => _http = http;
+        var response = await _http.PostAsJsonAsync("api/resources", model);
+        response.EnsureSuccessStatusCode();
+    }
 
-        public async Task<List<ResourceDto>> GetResourcesAsync()
-        {
-            // GetFromJsonAsync może zwrócić null, dlatego harujący fallback
-            var list = await _http.GetFromJsonAsync<List<ResourceDto>>("api/resources");
-            return list ?? new List<ResourceDto>();
-        }
-
-        public Task CreateResourceAsync(ResourceDto model)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task UpdateResourceAsync(ResourceDto model)
-        {
-            throw new NotImplementedException();
-        }
+    // Uzupełniona metoda
+    public async Task UpdateResourceAsync(Guid id, UpdateResourceRequestDto model)
+    {
+        var response = await _http.PutAsJsonAsync($"api/resources/{id}", model);
+        response.EnsureSuccessStatusCode();
     }
 }
