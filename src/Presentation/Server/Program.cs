@@ -1,3 +1,4 @@
+
 using System.Text;
 using Application.Interfaces.Booking;
 using Application.Interfaces.Identity;
@@ -5,7 +6,7 @@ using Application.Interfaces.Persistence;
 using Application.Services;
 using Domain.Entities;
 using Infrastructure.Authentication;
-using Infrastructure.Identity; // Dodano using dla AuthService
+using Infrastructure.Identity;
 using Infrastructure.Persistence.DbContext;
 using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence.Seed;
@@ -14,12 +15,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 namespace Server;
 
 public class Program
 {
     private const string DefaultDbName = "systemrezerwacji.db";
+    
 
     public static async Task Main(string[] args)
     {
@@ -56,7 +59,34 @@ public class Program
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile).Assembly);
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "SystemRezerwacji API", Version = "v1" });
+            
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Wprowadź token JWT poprzedzony słowem 'Bearer ' (np. 'Bearer eyJhbGci...')",
+                Name = "Authorization",
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+            
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new string[] {}
+                }
+            });
+        });
     }
 
     private static void ConfigureDatabaseAndIdentity(WebApplicationBuilder builder)
@@ -132,8 +162,13 @@ public class Program
     private static void ConfigureApplicationServices(WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IAuthService, AuthService>();
+        
         builder.Services.AddScoped<IResourceTypeRepository, ResourceTypeRepository>();
+        builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
+        
+        
         builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
+        builder.Services.AddScoped<IResourceService, ResourceService>();
         builder.Services.AddScoped<IBookingService, BookingService>();
 
     }
@@ -165,13 +200,16 @@ public class Program
         {
             var context = services.GetRequiredService<SystemRezerwacjiDbContext>();
             await context.Database.MigrateAsync();
+
+            // Wywołaj wszystkie seedery, przekazując dostawcę usług
             await IdentityDataSeeder.SeedRolesAndAdminUserAsync(services);
             await ResourceTypeSeeder.SeedResourceTypeAsync(services);
+            //await ResourceSeeder.SeedAsync(services); 
         }
         catch (Exception ex)
         {
             var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while seeding the database.");
+            logger.LogError(ex, "Wystąpił błąd podczas seedowania bazy danych.");
         }
     }
 }

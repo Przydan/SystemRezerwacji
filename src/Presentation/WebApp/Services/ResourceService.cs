@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using Shared.DTOs.Resource;
-using WebApp.Services;
+
+namespace WebApp.Services;
 
 public class ResourceService : IResourceService
 {
