@@ -20,76 +20,31 @@ public class SystemRezerwacjiDbContext : IdentityDbContext<User, IdentityRole<Gu
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
-        
-        modelBuilder.Entity<Resource>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-            entity.HasOne(d => d.ResourceType)
-                .WithMany(p => p.Resources)
-                .HasForeignKey(d => d.ResourceTypeId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-        
-        // Konfiguracja dla ResourceFeature
-        modelBuilder.Entity<ResourceFeature>(entity =>
-        {
-            entity.HasKey(rf => new { rf.ResourceId, rf.FeatureId });
-            
-            entity.HasOne(rf => rf.Resource)
-                .WithMany(r =>
-                    r.ResourceFeatures)
-                .HasForeignKey(rf => rf.ResourceId);
-            
-            entity.HasOne(rf => rf.Feature)
-                .WithMany(f =>
-                    f.ResourceFeatures)
-                .HasForeignKey(rf => rf.FeatureId);
-        });
+        base.OnModelCreating(modelBuilder); // To jest WAŻNE dla Identity
 
-        // Konfiguracja dla Booking
-        modelBuilder.Entity<Booking>(entity =>
-        {
-            entity.Property(e => e.Status)
-                .HasConversion<string>()
-                .HasMaxLength(50);
-            entity.Property(e => e.StartTime).IsRequired();
-            entity.Property(e => e.EndTime).IsRequired();
+        // --- Konfiguracja relacji wiele-do-wielu dla Resource <--> Feature ---
 
-            // Relacja Booking * --- 1 User (Użytkownik może mieć wiele rezerwacji)
-            entity.HasOne(b => b.User)
-                .WithMany(u => u.Bookings)
-                .HasForeignKey(b => b.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+        // 1. Zdefiniuj klucz złożony dla tabeli łączącej ResourceFeature
+        modelBuilder.Entity<ResourceFeature>()
+            .HasKey(rf => new { rf.ResourceId, rf.FeatureId });
 
-            // Relacja Booking * --- 1 Resource (Zasób może mieć wiele rezerwacji)
-            entity.HasOne(b => b.Resource)
-                .WithMany(r => r.Bookings)
-                .HasForeignKey(b => b.ResourceId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
+        // 2. Zdefiniuj relację od strony Resource
+        modelBuilder.Entity<ResourceFeature>()
+            .HasOne(rf => rf.Resource)
+            .WithMany(r => r.ResourceFeatures) // <-- wskazuje na ICollection<ResourceFeature> w klasie Resource
+            .HasForeignKey(rf => rf.ResourceId);
 
-        // Konfiguracja dla ResourceType
-        modelBuilder.Entity<ResourceType>(entity =>
-        {
-            entity.Property(rt => rt.Name).IsRequired().HasMaxLength(100);
-            entity.HasIndex(rt => rt.Name).IsUnique();
-        });
+        // 3. Zdefiniuj relację od strony Feature
+        modelBuilder.Entity<ResourceFeature>()
+            .HasOne(rf => rf.Feature)
+            .WithMany(f => f.ResourceFeatures) // <-- wskazuje na ICollection<ResourceFeature> w klasie Feature
+            .HasForeignKey(rf => rf.FeatureId);
 
-        // Konfiguracja dla Feature
-        modelBuilder.Entity<Feature>(entity =>
-        {
-            entity.Property(f => f.Name).IsRequired().HasMaxLength(100);
-            entity.HasIndex(f => f.Name).IsUnique();
-        });
+        // --- Pozostałe konfiguracje ---
+        modelBuilder.Entity<ResourceType>()
+            .HasIndex(rt => rt.Name).IsUnique();
 
-        // Konfiguracja dla User (w ramach Identity)
-        // IdentityDbContext sam konfiguruje większość dla User, ale można dostosować
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.Property(u => u.FirstName).HasMaxLength(50);
-            entity.Property(u => u.LastName).HasMaxLength(50);
-        });
+        modelBuilder.Entity<Feature>()
+            .HasIndex(f => f.Name).IsUnique();
     }
 }
