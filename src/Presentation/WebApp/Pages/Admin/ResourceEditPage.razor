@@ -31,7 +31,7 @@
 
             @if (resourceTypes != null)
             {
-                <MudSelect T="Guid" @bind-Value="model.ResourceTypeId" Label="Typ zasobu" For="@(() => model.ResourceTypeId)" Required="true" RequiredError="Typ zasobu jest wymagany." Class="mt-3">
+                <MudSelect T="Guid" @bind-Value="model.Id" Label="Typ zasobu" For="@(() => model.Id)" Required="true" RequiredError="Typ zasobu jest wymagany." Class="mt-3">
                     @foreach (var type in resourceTypes)
                     {
                         <MudSelectItem Value="@type.Id">@type.Name</MudSelectItem>
@@ -73,7 +73,7 @@
                     Description = resource.Description,
                     Location = resource.Location,
                     Capacity = resource.Capacity,
-                    ResourceTypeId = resource.ResourceTypeId
+                    Id = resource.Id
                 };
             }
         }
@@ -92,7 +92,7 @@
                     Description = model.Description,
                     Location = model.Location,
                     Capacity = model.Capacity,
-                    ResourceTypeId = model.ResourceTypeId
+                    ResourceTypeId = model.Id
                 };
                 var result = await ResourceService.CreateResourceAsync(createDto);
                 success = result != null;
