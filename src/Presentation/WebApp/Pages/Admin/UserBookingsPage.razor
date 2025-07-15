@@ -1,0 +1,55 @@
+@page "/admin/user-bookings"
+@using Application.Interfaces.Booking
+@attribute [Authorize(Roles = "Administrator")]
+@inject HttpClient Http
+@inject IBookingService BookingService
+
+<PageTitle>Rezerwacje użytkowników</PageTitle>
+<MudText Typo="Typo.h4">Rezerwacje użytkowników</MudText>
+
+@if (users == null) { <MudProgressCircular Indeterminate="true" /> }
+else
+{
+    <MudSelect T="Guid?" Label="Wybierz użytkownika" @bind-Value="selectedUserId">
+        @foreach (var user in users)
+        {
+            <MudSelectItem Value="@((Guid?)user.Id)">@user.Email</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+@if (selectedUserBookings != null)
+{
+    <MudText Typo="Typo.h6" Class="mt-4">Rezerwacje dla wybranego użytkownika:</MudText>
+    @if (selectedUserBookings.Any())
+    {
+    }
+    else
+    {
+        <MudText>Ten użytkownik nie ma rezerwacji.</MudText>
+    }
+}
+
+@code {
+    private class UserDisplayDto {
+        public Guid Id { get; set; }
+        public string? Email { get; set; }
+    }
+
+    private List<UserDisplayDto>? users;
+    private List<BookingDto>? selectedUserBookings;
+    private Guid? selectedUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await Http.GetFromJsonAsync<List<UserDisplayDto>>("api/users");
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (selectedUserId.HasValue)
+        {
+            selectedUserBookings = await BookingService.GetUserBookingsAsync(selectedUserId.Value);
+        }
+    }
+}

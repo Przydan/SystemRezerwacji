@@ -1,7 +1,14 @@
 @page "/resource/{ResourceId:guid}"
-@using WebApp.Services
+@using System.Security.Claims
+@using Application.Interfaces.Booking
+@using Application.Interfaces.Persistence
+@using Shared.DTOs.Resource
+@using Shared.DTOs.Booking
+@using WebApp.Components
+@using IResourceService = Application.Interfaces.Persistence.IResourceService
 @inject IResourceService ResourceService
 @inject IBookingService BookingService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <h3>Szczegóły zasobu</h3>
 
@@ -35,31 +42,44 @@ else
     {
         @foreach (var b in bookings)
         {
+            @* Zakładamy, że komponent BookingListItem istnieje i został już poprawiony lub nie wymagał poprawek *@
             <BookingListItem Booking="b"/>
         }
     }
 }
 
 @code {
-    [Parameter] public Guid ResourceId { get; set; }
+    [Parameter]
+    public Guid ResourceId { get; set; }
 
     private ResourceDto? resource;
     private List<BookingDto>? bookings;
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Pobierz listę zasobów i znajdź ten o pasującym ID
-        resource = (await ResourceService.GetResourcesAsync())
-            .FirstOrDefault(r => r.Id == ResourceId);
+        // 1. Pobierz konkretny zasób po jego ID (wydajne)
+        resource = await ResourceService.GetResourceByIdAsync(ResourceId);
 
-        // 2. Jeśli zasób znaleziony, pobierz wszystkie MOJE rezerwacje 
-        //    i filtrowaj po nazwy zasobu (bo BookingDto nie ma ResourceId)
         if (resource != null)
         {
-            bookings = (await BookingService.GetMyBookingsAsync())
-                .Where(b => b.ResourceName == resource.Name)
-                .ToList();
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (Guid.TryParse(userIdString, out var userId))
+                {
+                    // 2. Pobierz wszystkie rezerwacje tego użytkownika
+                    var allMyBookings = await BookingService.GetUserBookingsAsync(userId);
+                    
+                    // UWAGA: To jest tymczasowe obejście problemu w projekcie.
+                    // Poprawnie powinno się filtrować po ResourceId, ale brakuje go w BookingDto.
+                    bookings = allMyBookings
+                        .Where(b => b.ResourceName == resource.Name)
+                        .ToList();
+                }
+            }
         }
     }
-
 }

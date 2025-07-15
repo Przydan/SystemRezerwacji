@@ -143,6 +143,14 @@ namespace Server.Controllers
             // Operacja PUT, która się powiodła, powinna zwrócić status 204 No Content.
             return NoContent();
         }
+        
+        [HttpGet("user/{userId}")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> GetUserBookings(Guid userId)
+        {
+            var bookings = await _bookingService.GetUserBookingsAsync(userId);
+            return Ok(bookings);
+        }
 
         private Guid GetUserIdFromToken()
         {

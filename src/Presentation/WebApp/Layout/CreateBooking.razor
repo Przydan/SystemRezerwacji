@@ -1,7 +1,14 @@
-@namespace WebApp.Layout
-
+@page "/create-booking"
+@using System.Security.Claims
+@using Application.Interfaces.Booking
+@using Application.Interfaces.Persistence // Poprawny using dla IResourceService
+@using Shared.DTOs.Booking
+@using Shared.DTOs.Resource
+@using WebApp.Components
+@using IResourceService = Application.Interfaces.Persistence.IResourceService
 @inject IResourceService ResourceService
 @inject IBookingService BookingService
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
 <h3>Nowa rezerwacja</h3>
@@ -24,13 +31,29 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        resources = await ResourceService.GetResourcesAsync();
+        // Ta linia będzie wymagała poprawki w kolejnym kroku, na razie ją zostawiamy.
+        resources = await ResourceService.GetAllResourcesAsync(); 
     }
 
     private async Task HandleCreate(BookingRequestDto dto)
     {
-        await BookingService.CreateBookingAsync(dto);
-        Nav.NavigateTo("/my-reservations");
-    }
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+        if (Guid.TryParse(userIdString, out var userId))
+        {
+            // Przekazujemy DTO oraz ID zalogowanego użytkownika
+            var createdBooking = await BookingService.CreateBookingAsync(dto, userId);
+            if (createdBooking is not null)
+            {
+                Nav.NavigateTo("/my-reservations");
+            }
+            // Opcjonalnie: obsłuż błąd, jeśli rezerwacja nie została utworzona
+        }
+        else
+        {
+            Nav.NavigateTo("/login");
+        }
+    }
 }

@@ -19,6 +19,15 @@
       <MudNavLink Href="/register">Zarejestruj</MudNavLink>
     </NotAuthorized>
   </AuthorizeView>
+  
+  <AuthorizeView Roles="Administrator">
+    <Authorized>
+      <MudNavGroup Title="Panel Admina" Expanded="true">
+        <MudNavLink Href="/admin/user-bookings">Rezerwacje użytkowników</MudNavLink>
+        <MudNavLink Href="/admin/manage-resources">Zarządzaj zasobami</MudNavLink>
+      </MudNavGroup>
+    </Authorized>
+  </AuthorizeView>
 </MudNavMenu>
 
 @code {

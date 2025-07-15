@@ -1,6 +1,11 @@
 ﻿@page "/bookings/new"
 @attribute [Authorize]
+@using System.Security.Claims
+@using Application.Interfaces.Booking
+@using Shared.DTOs.Booking
+@using WebApp.Components
 @inject IBookingService BookingService
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
@@ -14,17 +19,31 @@
     private async Task HandleCreateBooking()
     {
         // TODO: Na razie hardkodujemy ID zasobu. Docelowo będzie wybierany z listy.
-        newBooking.ResourceId = Guid.Parse("TUTAJ_WKLEJ_ID_ZASOBU_Z_BAZY_DANYCH"); // <--- WAŻNE
+        // Upewnij się, że to ID istnieje w Twojej bazie danych, inaczej wystąpi błąd.
+        newBooking.ResourceId = Guid.Parse("08dc9e86-884a-44e2-8557-b58d8b674b9e"); // Przykładowe ID
 
-        var result = await BookingService.CreateBookingAsync(newBooking);
-        if (result != null)
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (Guid.TryParse(userIdString, out var userId))
         {
-            Snackbar.Add("Rezerwacja została utworzona!", Severity.Success);
-            NavigationManager.NavigateTo("/my-reservations");
+            // Wywołujemy poprawną metodę, przekazując DTO i ID użytkownika
+            var result = await BookingService.CreateBookingAsync(newBooking, userId);
+            if (result != null)
+            {
+                Snackbar.Add("Rezerwacja została utworzona!", Severity.Success);
+                NavigationManager.NavigateTo("/my-reservations");
+            }
+            else
+            {
+                Snackbar.Add("Nie udało się utworzyć rezerwacji (konflikt terminów?).", Severity.Error);
+            }
         }
         else
         {
-            Snackbar.Add("Nie udało się utworzyć rezerwacji (konflikt terminów?).", Severity.Error);
+            // To nie powinno się zdarzyć na stronie z atrybutem [Authorize]
+            Snackbar.Add("Błąd: Nie można zidentyfikować użytkownika.", Severity.Error);
         }
     }
 }

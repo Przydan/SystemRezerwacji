@@ -1,6 +1,8 @@
 @page "/cancel-booking/{id:guid}"
-@using WebApp.Services
+@using System.Security.Claims
+@using Application.Interfaces.Booking
 @inject IBookingService BookingService
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
 <h3>Anuluj rezerwację</h3>
@@ -15,20 +17,36 @@
            Variant="Variant.Text"
            OnClick="@(() => Nav.NavigateTo("/my-reservations"))"
            Class="ml-2">
-    Nie, wróć
+Nie, wróć
 </MudButton>
 
 @code {
-
-    // parametr pobrany z trasy
-    [Parameter] public Guid id { get; set; }
+    [Parameter]
+    public Guid id { get; set; }
 
     private async Task ConfirmCancel()
     {
-        // wywołanie serwisu anulującego rezerwację
-        await BookingService.CancelBookingAsync(id);
-        // przekierowanie z powrotem do "Moje rezerwacje"
-        Nav.NavigateTo("/my-reservations");
-    }
+        // 1. Pobierz stan uwierzytelnienia użytkownika
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
 
+        // 2. Wyciągnij ID użytkownika z jego "claims" (oświadczeń)
+        var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (Guid.TryParse(userIdString, out var userId))
+        {
+            // 3. Wywołaj serwis z ID rezerwacji ORAZ ID użytkownika
+            var success = await BookingService.CancelBookingAsync(id, userId);
+            if (success)
+            {
+                Nav.NavigateTo("/my-reservations");
+            }
+            // Opcjonalnie: obsłuż przypadek, gdy anulowanie się nie powiedzie
+        }
+        else
+        {
+            // Opcjonalnie: obsłuż błąd, np. wyloguj użytkownika lub pokaż komunikat
+            Nav.NavigateTo("/login");
+        }
+    }
 }
