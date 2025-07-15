@@ -1,17 +1,18 @@
 @page "/resourcetypes"
+@using Application.Interfaces.Persistence
+@using Shared.DTOs.Resource
 @using Microsoft.AspNetCore.Authorization
-@using WebApp.Services
 @attribute [Authorize] // Wymaga zalogowania!
 @inject IResourceTypeService ResourceTypeService
 @inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h4" GutterBottom="true">Typy Zasobów</MudText>
 
-@if (resourceTypes == null && isLoading)
+@if (isLoading)
 {
     <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
 }
-else if (resourceTypes != null)
+else if (resourceTypes is not null && resourceTypes.Any())
 {
     <MudTable Items="@resourceTypes" Hover="true" Striped="true">
         <HeaderContent>
@@ -26,9 +27,8 @@ else if (resourceTypes != null)
 }
 else
 {
-    <MudAlert Severity="Severity.Error">Nie udało się załadować danych.</MudAlert>
+    <MudAlert Severity="Severity.Info">Brak zdefiniowanych typów zasobów lub nie udało się załadować danych.</MudAlert>
 }
-
 
 @code {
     private List<ResourceTypeDto>? resourceTypes;
@@ -37,13 +37,19 @@ else
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
-        resourceTypes = await ResourceTypeService.GetResourceTypesAsync();
-        if (resourceTypes == null)
+        try
         {
-            Snackbar.Add("Błąd podczas pobierania danych z API.", Severity.Error);
+            // ✅ Poprawione wywołanie metody
+            resourceTypes = await ResourceTypeService.GetAllResourceTypesAsync();
         }
-
-        isLoading = false;
+        catch (Exception ex)
+        {
+            // Lepsza obsługa błędów
+            Snackbar.Add($"Błąd podczas pobierania danych z API: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
-
 }

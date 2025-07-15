@@ -1,136 +1,76 @@
-@* @page "/admin/resources" *@
-@* @using Microsoft.AspNetCore.Authorization *@
-@* @attribute [Authorize(Roles = "Administrator")] *@
-@* *@
-@* @inject ResourceService ResourceService *@
-@* @inject IDialogService DialogService *@
-@* *@
-@* <h3>Zarządzanie zasobami</h3> *@
-@* *@
-@* <MudButton Variant="Variant.Filled" *@
-@*            Color="Color.Primary" *@
-@*            OnClick="() => OpenForm(null)" *@
-@*            StartIcon="@Icons.Material.Filled.Add"> *@
-@*   Dodaj nowy zasób *@
-@* </MudButton> *@
-@* *@
-@* <MudTable Items="Resources" *@
-@*           Filter="new Func<ResourceDto,bool>(FilterFunc)" *@
-@*           Hover="true" Bordered="true" HorizontalScrollbar="true"> *@
-@*   <ToolBarContent> *@
-@*     <MudTextField @bind-Value="filterName" *@
-@*                   Placeholder="Wyszukaj nazwę..." *@
-@*                   Adornment="Adornment.End" *@
-@*                   AdornmentIcon="@Icons.Material.Filled.Search" *@
-@*                   Clearable="true"/> *@
-@* *@
-@*     <MudSelect T="Guid?" *@
-@*                @bind-Value="selectedTypeId" *@
-@*                Placeholder="Typ zasobu" *@
-@*                Clearable="true"> *@
-@*       @foreach (var type in ResourceTypes) *@
-@*       { *@
-@*         <MudSelectItem Value="@type.Id">@type.Name</MudSelectItem> *@
-@*       } *@
-@*     </MudSelect> *@
-@* *@
-@*     <MudCheckBox T="bool" *@
-@*                  @bind-Checked="onlyActive" *@
-@*                  Label="Tylko aktywne" *@
-@*                  Class="mx-4"/> *@
-@*   </ToolBarContent> *@
-@* *@
-@*   <HeaderContent> *@
-@*     <MudTh>Nazwa</MudTh> *@
-@*     <MudTh>Typ</MudTh> *@
-@*     <MudTh>Lokalizacja</MudTh> *@
-@*     <MudTh>Pojemność</MudTh> *@
-@*     <MudTh>Aktywny?</MudTh> *@
-@*     <MudTh>Akcje</MudTh> *@
-@*   </HeaderContent> *@
-@* *@
-@*   <RowTemplate> *@
-@*     <MudTd>@context.Name</MudTd> *@
-@*     <MudTd>@context.ResourceTypeName</MudTd> *@
-@*     <MudTd>@context.Location</MudTd> *@
-@*     <MudTd>@context.Capacity</MudTd> *@
-@*     <MudTd>@(context.IsActive ? "Tak" : "Nie")</MudTd> *@
-@*     <MudTd> *@
-@*       <MudIconButton Icon="@Icons.Material.Filled.Edit" *@
-@*                      Color="Color.Primary" *@
-@*                      Size="Size.Small" *@
-@*                      OnClick="@(() => OpenForm(context))"/> *@
-@*       <MudIconButton Icon="@Icons.Material.Filled.Delete" *@
-@*                      Color="Color.Error" *@
-@*                      Size="Size.Small" *@
-@*                      OnClick="@(() => ConfirmDelete(context))"/> *@
-@*     </MudTd> *@
-@*   </RowTemplate> *@
-@* </MudTable> *@
-@* *@
-@* @if (isFormOpen) *@
-@* { *@
-@*   <ResourceForm Model="selectedResource" *@
-@*                 Resources="ResourceTypes" *@
-@*                 OnCancel="CloseForm" *@
-@*                 OnSave="OnSaveResource"/> *@
-@* } *@
-@* *@
-@* @code { *@
-@*   private List<ResourceDto> Resources = new(); *@
-@*   private List<ResourceTypeDto> ResourceTypes = new(); *@
-@*   private string? filterName; *@
-@*   private Guid? selectedTypeId; *@
-@*   private bool onlyActive; *@
-@*   private ResourceDto selectedResource; *@
-@*   private bool isFormOpen; *@
-@* *@
-@*   protected override async Task OnInitializedAsync() *@
-@*   { *@
-@*     ResourceTypes = await ResourceService.GetResourceTypesAsync(); *@
-@*     await LoadResources(); *@
-@*   } *@
-@* *@
-@*   private async Task LoadResources() *@
-@*   { *@
-@*     Resources = await ResourceService.GetResourcesAsync(); *@
-@*   } *@
-@* *@
-@*   private bool FilterFunc(ResourceDto item) => *@
-@*     (string.IsNullOrWhiteSpace(filterName) || (item.Name != null && item.Name.Contains(filterName, StringComparison.OrdinalIgnoreCase))) *@
-@*     && (selectedTypeId == null || item.ResourceTypeId == selectedTypeId) *@
-@*     && (!onlyActive || item.IsActive); *@
-@* *@
-@*   private void OpenForm(ResourceDto? resource) *@
-@*   { *@
-@*     selectedResource = resource is null *@
-@*       ? new ResourceDto() *@
-@*       : new ResourceDto(resource); *@
-@*     isFormOpen = true; *@
-@*   } *@
-@* *@
-@*   private void CloseForm() => isFormOpen = false; *@
-@* *@
-@*   private async Task OnSaveResource(ResourceDto _) *@
-@*   { *@
-@*     isFormOpen = false; *@
-@*     await LoadResources(); *@
-@*   } *@
-@* *@
-@*   private async Task ConfirmDelete(ResourceDto resource) *@
-@*   { *@
-@*     bool? result = await DialogService.ShowMessageBox( *@
-@*       "Potwierdź usunięcie", *@
-@*       $"Czy na pewno usunąć zasób „{resource.Name}”?", *@
-@*       yesText: "Usuń", noText: "Anuluj", *@
-@*       options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall } *@
-@*     ); *@
-@* *@
-@*     if (result == true) *@
-@*     { *@
-@*       await ResourceService.DeleteResourceAsync(resource.Id); *@
-@*       await LoadResources(); *@
-@*     } *@
-@*   } *@
-@* *@
-@* } *@
+@page "/admin/manage-resources"
+@using Application.Interfaces.Persistence
+@attribute [Authorize(Roles = "Administrator")]
+
+@inject IResourceService ResourceService
+@inject IResourceTypeService ResourceTypeService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Zarządzaj Zasobami</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Zarządzaj Zasobami</MudText>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Nav.NavigateTo("/admin/resource/new"))" StartIcon="@Icons.Material.Filled.Add" Class="mb-4">
+    Dodaj Nowy Zasób
+</MudButton>
+
+@if (resources == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudTable Items="@resources" Hover="true">
+        <HeaderContent>
+            <MudTh>Nazwa</MudTh>
+            <MudTh>Typ</MudTh>
+            <MudTh>Opis</MudTh>
+            <MudTh>Akcje</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nazwa">@context.Name</MudTd>
+            <MudTd DataLabel="Typ">@context.ResourceTypeName</MudTd>
+            <MudTd DataLabel="Opis">@context.Description</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => Nav.NavigateTo($"/admin/resource/edit/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => OnDeleteClicked(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<ResourceDto>? resources;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadResources();
+    }
+
+    private async Task LoadResources()
+    {
+        resources = await ResourceService.GetAllResourcesAsync();
+    }
+
+    private async Task OnDeleteClicked(Guid resourceId)
+    {
+        var parameters = new DialogParameters { ["ContentText"] = "Czy na pewno chcesz usunąć ten zasób? Tej operacji nie można cofnąć." };
+        var dialog = DialogService.Show<ConfirmDeleteDialog>("Potwierdź usunięcie", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var success = await ResourceService.DeleteResourceAsync(resourceId);
+            if (success)
+            {
+                Snackbar.Add("Zasób został usunięty.", Severity.Success);
+                await LoadResources(); // Odśwież listę
+            }
+            else
+            {
+                Snackbar.Add("Nie udało się usunąć zasobu.", Severity.Error);
+            }
+        }
+    }
+}

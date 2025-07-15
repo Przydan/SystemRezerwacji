@@ -1,30 +1,58 @@
 using System.Net.Http.Json;
+using Application.Interfaces.Persistence;
 using Shared.DTOs.Resource;
 
 namespace WebApp.Services;
 
 public class ResourceService : IResourceService
 {
-    private readonly HttpClient _http;
-    public ResourceService(HttpClient http) => _http = http;
+    private readonly HttpClient _httpClient;
 
-    public async Task<List<ResourceDto>> GetResourcesAsync()
+    public ResourceService(HttpClient httpClient)
     {
-        var list = await _http.GetFromJsonAsync<List<ResourceDto>>("api/resources");
-        return list ?? new List<ResourceDto>();
+        _httpClient = httpClient;
     }
 
-    // Uzupełniona metoda
-    public async Task CreateResourceAsync(CreateResourceRequestDto model)
+    public async Task<ResourceDto?> GetResourceByIdAsync(Guid id)
     {
-        var response = await _http.PostAsJsonAsync("api/resources", model);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            return await _httpClient.GetFromJsonAsync<ResourceDto>($"api/resource/{id}");
+        }
+        catch (HttpRequestException) // Obsługuje błędy sieciowe lub statusy 404/500
+        {
+            return null;
+        }
     }
 
-    // Uzupełniona metoda
-    public async Task UpdateResourceAsync(Guid id, UpdateResourceRequestDto model)
+    public async Task<List<ResourceDto>> GetAllResourcesAsync()
     {
-        var response = await _http.PutAsJsonAsync($"api/resources/{id}", model);
-        response.EnsureSuccessStatusCode();
+        var resources = await _httpClient.GetFromJsonAsync<List<ResourceDto>>("api/resource");
+        return resources ?? new List<ResourceDto>();
+    }
+
+    public async Task<ResourceDto> CreateResourceAsync(CreateResourceRequestDto createDto)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/resource", createDto);
+        response.EnsureSuccessStatusCode(); // Rzuci wyjątek, jeśli odpowiedź nie jest sukcesem
+        
+        var createdResource = await response.Content.ReadFromJsonAsync<ResourceDto>();
+        if (createdResource is null)
+        {
+            throw new ApplicationException("API did not return the created resource.");
+        }
+        return createdResource;
+    }
+
+    public async Task<bool> UpdateResourceAsync(Guid id, UpdateResourceRequestDto updateDto)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/resource/{id}", updateDto);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteResourceAsync(Guid id)
+    {
+        var response = await _httpClient.DeleteAsync($"api/resource/{id}");
+        return response.IsSuccessStatusCode;
     }
 }

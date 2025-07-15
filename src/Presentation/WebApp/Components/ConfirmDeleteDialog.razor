@@ -1,60 +1,21 @@
-@* @namespace SystemRezerwacji.WebApp.Components *@
-@* @using MudBlazor *@
 @* *@
 @* <MudDialog> *@
-@*     <MudDialogContent> *@
-@*         <MudText Typo="Typo.h6">@ContentText</MudText> *@
-@*     </MudDialogContent> *@
-@*     <MudDialogActions> *@
-@*         <MudButton Variant="Variant.Text" *@
-@*                    Color="Color.Secondary" *@
-@*                    OnClick="Cancel" *@
-@*                    aria-label="@CancelText"> *@
-@*             @CancelText *@
-@*         </MudButton> *@
-@*         <MudButton Variant="Variant.Filled" *@
-@*                    Color="Color.Error" *@
-@*                    OnClick="Submit" *@
-@*                    aria-label="@ConfirmText"> *@
-@*             @ConfirmText *@
-@*         </MudButton> *@
-@*     </MudDialogActions> *@
+@*     <DialogContent> *@
+@*         <MudText>@ContentText</MudText> *@
+@*     </DialogContent> *@
+@*     <DialogActions> *@
+@*         <MudButton OnClick="Cancel">Anuluj</MudButton> *@
+@*         <MudButton Color="Color.Error" OnClick="Submit">Usuń</MudButton> *@
+@*     </DialogActions> *@
 @* </MudDialog> *@
 @* *@
 @* @code { *@
-@*     /// <summary> *@
-@*     /// Serwis dialogowy do zarządzania interakcją z dialogiem. *@
-@*     /// </summary> *@
-@*     [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!; *@
-@*      *@
-@*     /// <summary> *@
-@*     /// Tekst wyświetlany w treści dialogu. *@
-@*     /// </summary> *@
-@*     [Parameter] public string ContentText { get; set; } = "Czy na pewno?"; *@
-@*      *@
-@*     /// <summary> *@
-@*     /// Tekst przycisku potwierdzającego. *@
-@*     /// </summary> *@
-@*     [Parameter] public string ConfirmText { get; set; } = "Tak"; *@
-@*      *@
-@*     /// <summary> *@
-@*     /// Tekst przycisku anulującego. *@
-@*     /// </summary> *@
-@*     [Parameter] public string CancelText { get; set; } = "Nie"; *@
+@*     [CascadingParameter] *@
+@*         // MudDialogInstance MudDialog { get; set; } = default!; *@
 @* *@
-@*     /// <summary> *@
-@*     /// Obsługuje kliknięcie przycisku potwierdzającego. *@
-@*     /// </summary> *@
-@*     private void Submit() *@
-@*     { *@
-@*         MudDialog?.Close(DialogResult.Ok(true)); *@
-@*     } *@
+@*     [Parameter] *@
+@*     public string ContentText { get; set; } = "Czy na pewno chcesz usunąć ten element?"; *@
 @* *@
-@*     /// <summary> *@
-@*     /// Obsługuje kliknięcie przycisku anulującego. *@
-@*     /// </summary> *@
-@*     private void Cancel() *@
-@*     { *@
-@*         MudDialog?.Cancel(); *@
-@*     } *@
+@*     void Submit() => MudDialog.Close(DialogResult.Ok(true)); *@
+@*     void Cancel() => MudDialog.Cancel(); *@
 @* } *@

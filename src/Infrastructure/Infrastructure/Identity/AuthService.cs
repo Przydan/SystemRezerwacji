@@ -32,7 +32,7 @@ public class AuthService : IAuthService
     }
 
     // POPRAWIONA METODA LOGOWANIA - używa SignInManager do obsługi blokady
-    public async Task<AuthResponseDto> LoginUserAsync(LoginUserDto loginDto)
+    public async Task<AuthResponseDto> LoginUserAsync(LoginRequestDto loginDto)
     {
         var user = await _userManager.FindByEmailAsync(loginDto.Email);
         if (user == null)
@@ -67,7 +67,7 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<AuthResponseDto> RegisterUserAsync(RegisterUserDto registerDto, string defaultRole = "User")
+    public async Task<AuthResponseDto> RegisterUserAsync(RegisterRequestDto registerDto, string defaultRole = "User")
     {
         var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
         if (existingUser != null)

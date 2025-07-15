@@ -1,0 +1,120 @@
+@page "/admin/resource/edit/{ResourceId:guid}"
+@page "/admin/resource/new"
+@using Application.Interfaces.Persistence
+@attribute [Authorize(Roles = "Administrator")]
+@inject IResourceService ResourceService
+@inject IResourceTypeService ResourceTypeService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>@(IsNew ? "Nowy zasób" : "Edycja zasobu")</PageTitle>
+
+@if (model == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+    return;
+}
+
+<EditForm Model="@model" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5">@(IsNew ? "Tworzenie nowego zasobu" : $"Edycja: {originalResourceName}")</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTextField @bind-Value="model.Name" Label="Nazwa zasobu" For="@(() => model.Name)" Required="true" RequiredError="Nazwa jest wymagana." />
+            <MudTextField @bind-Value="model.Description" Label="Opis" For="@(() => model.Description)" Lines="3" Class="mt-3"/>
+            <MudTextField @bind-Value="model.Location" Label="Lokalizacja" For="@(() => model.Location)" Class="mt-3"/>
+            <MudNumericField @bind-Value="model.Capacity" Label="Pojemność" For="@(() => model.Capacity)" Min="1" Class="mt-3"/>
+
+            @if (resourceTypes != null)
+            {
+                <MudSelect T="Guid" @bind-Value="model.ResourceTypeId" Label="Typ zasobu" For="@(() => model.ResourceTypeId)" Required="true" RequiredError="Typ zasobu jest wymagany." Class="mt-3">
+                    @foreach (var type in resourceTypes)
+                    {
+                        <MudSelectItem Value="@type.Id">@type.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Zapisz</MudButton>
+            <MudButton Variant="Variant.Filled" OnClick="@(() => Nav.NavigateTo("/admin/manage-resources"))" Color="Color.Secondary">Anuluj</MudButton>
+        </MudCardActions>
+    </MudCard>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public Guid? ResourceId { get; set; }
+
+    private bool IsNew => !ResourceId.HasValue;
+    private string originalResourceName = "";
+
+    private UpdateResourceRequestDto model = new();
+    private List<ResourceTypeDto>? resourceTypes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        resourceTypes = await ResourceTypeService.GetAllResourceTypesAsync();
+
+        if (!IsNew)
+        {
+            var resource = await ResourceService.GetResourceByIdAsync(ResourceId.Value);
+            if (resource != null)
+            {
+                originalResourceName = resource.Name;
+                model = new UpdateResourceRequestDto
+                {
+                    Name = resource.Name,
+                    Description = resource.Description,
+                    Location = resource.Location,
+                    Capacity = resource.Capacity,
+                    ResourceTypeId = resource.ResourceTypeId
+                };
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        bool success = false;
+        try
+        {
+            if (IsNew)
+            {
+                var createDto = new CreateResourceRequestDto
+                {
+                    Name = model.Name,
+                    Description = model.Description,
+                    Location = model.Location,
+                    Capacity = model.Capacity,
+                    ResourceTypeId = model.ResourceTypeId
+                };
+                var result = await ResourceService.CreateResourceAsync(createDto);
+                success = result != null;
+            }
+            else
+            {
+                success = await ResourceService.UpdateResourceAsync(ResourceId!.Value, model);
+            }
+
+            if (success)
+            {
+                Snackbar.Add("Zasób został zapisany.", Severity.Success);
+                Nav.NavigateTo("/admin/manage-resources");
+            }
+            else
+            {
+                Snackbar.Add("Zapis nie powiódł się.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Wystąpił błąd: {ex.Message}", Severity.Error);
+        }
+    }
+}

@@ -9,5 +9,6 @@ public class LoginRequestDto
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Hasło jest wymagane.")]
+    [DataType(DataType.Password)] // <-- DODANY ATRYBUT
     public string Password { get; set; } = string.Empty;
 }
