@@ -1,4 +1,3 @@
-
 using System.Text;
 using Application.Interfaces.Booking;
 using Application.Interfaces.Identity;
@@ -166,9 +165,9 @@ public class Program
         builder.Services.AddScoped<IResourceTypeRepository, ResourceTypeRepository>();
         builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
         
-        
         builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
         builder.Services.AddScoped<IResourceService, ResourceService>();
+        
         builder.Services.AddScoped<IBookingService, BookingService>();
 
     }
