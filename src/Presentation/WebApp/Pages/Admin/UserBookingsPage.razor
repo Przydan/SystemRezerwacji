@@ -7,10 +7,12 @@
 @inject IUserService UserService
 @inject IBookingService BookingService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Rezerwacje użytkowników</PageTitle>
 <MudText Typo="Typo.h4" GutterBottom="true">Rezerwacje użytkowników</MudText>
 
+@* Kod wyboru użytkownika pozostaje bez zmian *@
 @if (users == null)
 {
     <MudText>Ładowanie użytkowników...</MudText>
@@ -49,6 +51,7 @@ else if (selectedUserBookings != null)
                     <th>Data zakończenia</th>
                     <th>Status</th>
                     <th>Notatki</th>
+                    <th>Akcje</th>
                 </tr>
             </thead>
             <tbody>
@@ -60,6 +63,12 @@ else if (selectedUserBookings != null)
                         <td>@booking.EndTime.ToString("g")</td>
                         <td>@booking.Status</td>
                         <td>@booking.Notes</td>
+                        <td> @* --- POPRAWKA 2: Poprawna struktura komórki --- *@
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Color="Color.Error" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => ConfirmAndDeleteBooking(booking))" />
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -79,7 +88,6 @@ else if (selectedUserBookings != null)
     private string? selectedUserEmail;
     private bool isLoadingBookings = false;
 
-    // Prosta walidacja dla przykładu
     private string ValidateUserSelection(Guid? userId)
     {
         if (!userId.HasValue)
@@ -91,7 +99,6 @@ else if (selectedUserBookings != null)
     {
         try
         {
-            // Pobieramy wszystkich użytkowników, aby wypełnić listę
             users = await UserService.GetAllUsersAsync();
         }
         catch (Exception ex)
@@ -105,21 +112,17 @@ else if (selectedUserBookings != null)
         if (selectedUserId.HasValue && selectedUserId.Value != Guid.Empty)
         {
             isLoadingBookings = true;
-            // Wyczyść poprzednie rezerwacje na czas ładowania
-            selectedUserBookings = null; 
-            
-            // Znajdź email wybranego użytkownika do wyświetlenia
+            selectedUserBookings = null;
             selectedUserEmail = users?.FirstOrDefault(u => u.Id == selectedUserId.Value)?.Email;
 
             try
             {
-                // Użyj metody, którą stworzyliśmy do pobierania rezerwacji konkretnego użytkownika
                 selectedUserBookings = await BookingService.GetBookingsForUserAsync(selectedUserId.Value);
             }
             catch (Exception ex)
             {
                 Snackbar.Add($"Błąd podczas pobierania rezerwacji: {ex.Message}", Severity.Error);
-                selectedUserBookings = new List<BookingDto>(); // Ustaw pustą listę w razie błędu
+                selectedUserBookings = new List<BookingDto>();
             }
             finally
             {
@@ -128,11 +131,37 @@ else if (selectedUserBookings != null)
         }
         else
         {
-            // Jeśli użytkownik odznaczy wybór, czyścimy listę rezerwacji
             selectedUserBookings = null;
             selectedUserEmail = null;
         }
-        
-        // Nie ma potrzeby wywoływania StateHasChanged(), Blazor robi to automatycznie po obsłudze zdarzenia
+    }
+    
+    private async Task ConfirmAndDeleteBooking(BookingDto bookingToDelete)
+    {
+        var parameters = new DialogParameters
+        {
+            ["ContentText"] = $"Czy na pewno chcesz usunąć rezerwację dla zasobu '{bookingToDelete.ResourceName}'?",
+            ["ButtonText"] = "Usuń",
+            ["Color"] = Color.Error
+        };
+
+        // --- POPRAWKA 1: Wywołanie metody na instancji serwisu i użycie wersji asynchronicznej ---
+        var dialog = await DialogService.ShowAsync<WebApp.Components.ConfirmDeleteDialog>("Potwierdzenie usunięcia", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var success = await BookingService.AdminCancelBookingAsync(bookingToDelete.Id);
+            if (success)
+            {
+                selectedUserBookings?.Remove(bookingToDelete);
+                Snackbar.Add("Rezerwacja została usunięta.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Nie udało się usunąć rezerwacji.", Severity.Error);
+            }
+            StateHasChanged();
+        }
     }
 }

@@ -34,11 +34,9 @@ public class IdentityDataSeeder
                     }
                 }
             }
-
-            // Tworzenie domyślnego użytkownika-administratora
-            // Upewnij się, że email jest unikalny i hasło spełnia wymagania polityki Identity
-            var adminEmail = "admin@systemrezerwacji.local.com"; // Zmień na odpowiedni
-            var adminPassword = "AdminPassword123!"; // ZMIEŃ NA SILNE HASŁO W PRODUKCJI!
+            
+            var adminEmail = "admin@x.pl"; 
+            var adminPassword = "MagicpoinT1234!@#$"; 
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
@@ -49,13 +47,13 @@ public class IdentityDataSeeder
                     Email = adminEmail,
                     FirstName = "Admin",
                     LastName = "Systemu",
-                    EmailConfirmed = true // Dla uproszczenia w development; w produkcji rozważ proces potwierdzania
+                    EmailConfirmed = true 
                 };
                 var createUserResult = await userManager.CreateAsync(adminUser, adminPassword);
                 if (createUserResult.Succeeded)
                 {
                     logger.LogInformation($"Użytkownik admin '{adminEmail}' został utworzony.");
-                    // Przypisanie roli Administrator
+
                     var addToRoleResult = await userManager.AddToRoleAsync(adminUser, "Administrator");
                     if (addToRoleResult.Succeeded)
                     {

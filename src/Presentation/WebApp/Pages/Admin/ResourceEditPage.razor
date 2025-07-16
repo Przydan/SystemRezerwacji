@@ -1,6 +1,7 @@
 @page "/admin/resource/edit/{ResourceId:guid}"
 @page "/admin/resource/new"
 @using Application.Interfaces.Persistence
+@using Shared.DTOs.Resource
 @attribute [Authorize(Roles = "Administrator")]
 @inject IResourceService ResourceService
 @inject IResourceTypeService ResourceTypeService
@@ -9,7 +10,7 @@
 
 <PageTitle>@(IsNew ? "Nowy zasób" : "Edycja zasobu")</PageTitle>
 
-@if (model == null)
+@if (model == null && !IsNew) // Poprawiony warunek, aby nie pokazywać ładowania dla nowego zasobu
 {
     <MudProgressCircular Indeterminate="true" />
     return;
@@ -31,7 +32,8 @@
 
             @if (resourceTypes != null)
             {
-                <MudSelect T="Guid" @bind-Value="model.Id" Label="Typ zasobu" For="@(() => model.Id)" Required="true" RequiredError="Typ zasobu jest wymagany." Class="mt-3">
+                @* --- POPRAWKA 1 --- *@
+                <MudSelect T="Guid" @bind-Value="model.ResourceTypeId" Label="Typ zasobu" For="@(() => model.ResourceTypeId)" Required="true" RequiredError="Typ zasobu jest wymagany." Class="mt-3">
                     @foreach (var type in resourceTypes)
                     {
                         <MudSelectItem Value="@type.Id">@type.Name</MudSelectItem>
@@ -53,27 +55,33 @@
 
     private bool IsNew => !ResourceId.HasValue;
     private string originalResourceName = "";
-
-    private UpdateResourceRequestDto model = new();
+    
+    // Zmieniamy na nullowalny, aby obsłużyć stan ładowania
+    private UpdateResourceRequestDto? model;
     private List<ResourceTypeDto>? resourceTypes;
 
     protected override async Task OnInitializedAsync()
     {
         resourceTypes = await ResourceTypeService.GetAllResourceTypesAsync();
 
-        if (!IsNew)
+        if (IsNew)
         {
-            var resource = await ResourceService.GetResourceByIdAsync(ResourceId.Value);
+            model = new UpdateResourceRequestDto();
+        }
+        else
+        {
+            var resource = await ResourceService.GetResourceByIdAsync(ResourceId!.Value);
             if (resource != null)
             {
                 originalResourceName = resource.Name;
                 model = new UpdateResourceRequestDto
                 {
+                    Id = resource.Id, // ID zasobu, a nie typu!
                     Name = resource.Name,
                     Description = resource.Description,
                     Location = resource.Location,
                     Capacity = resource.Capacity,
-                    Id = resource.Id
+                    ResourceTypeId = resource.ResourceTypeId // --- POPRAWKA 2 ---
                 };
             }
         }
@@ -81,6 +89,8 @@
 
     private async Task HandleSubmit()
     {
+        if (model is null) return; // Zabezpieczenie
+
         bool success = false;
         try
         {
@@ -92,13 +102,14 @@
                     Description = model.Description,
                     Location = model.Location,
                     Capacity = model.Capacity,
-                    ResourceTypeId = model.Id
+                    ResourceTypeId = model.ResourceTypeId // --- POPRAWKA 3 ---
                 };
                 var result = await ResourceService.CreateResourceAsync(createDto);
                 success = result != null;
             }
             else
             {
+                // W `model` jest już ID zasobu, a AutoMapper je zignoruje
                 success = await ResourceService.UpdateResourceAsync(ResourceId!.Value, model);
             }
 
@@ -109,7 +120,7 @@
             }
             else
             {
-                Snackbar.Add("Zapis nie powiódł się.", Severity.Error);
+                Snackbar.Add("Zapis nie powiódł się. Sprawdź dane.", Severity.Error);
             }
         }
         catch (Exception ex)

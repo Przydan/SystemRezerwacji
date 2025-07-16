@@ -91,6 +91,22 @@ namespace Server.Controllers
             return NoContent();
         }
         
+        [HttpDelete("admin/{bookingId:guid}")]
+        [Authorize(Roles = "Administrator")] // Zabezpieczenie - tylko dla admina
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> AdminCancelBooking(Guid bookingId)
+        {
+            var success = await _bookingService.AdminCancelBookingAsync(bookingId);
+
+            if (!success)
+            {
+                return NotFound(new { message = "Booking not found." });
+            }
+
+            return NoContent();
+        }
+        
         [HttpGet("{bookingId:guid}", Name = "GetBookingById")]
         [ProducesResponseType(typeof(BookingDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -126,6 +126,23 @@ namespace Infrastructure.Services
             return bookings;
         }
 
+        public async Task<bool> AdminCancelBookingAsync(Guid bookingId)
+        {
+            var booking = await _context.Bookings.FindAsync(bookingId);
+            if (booking == null)
+            {
+                _logger.LogWarning("Admin próbował usunąć nieistniejącą rezerwację o ID: {BookingId}", bookingId);
+                return false;
+            }
+
+            // Admin usuwa rezerwację - można ustawić inny status dla odróżnienia
+            booking.Status = BookingStatus.CancelledByAdmin; 
+            _context.Bookings.Update(booking);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Admin usunął rezerwację o ID: {BookingId}", bookingId);
+            return true;
+        }
+
         public async Task<bool> UpdateBookingAsync(Guid bookingId, UpdateBookingRequestDto request, Guid userId)
         {
             var bookingToUpdate = await _context.Bookings
