@@ -3,7 +3,7 @@ using Domain.Entities;
 using Domain.Enums;
 using Infrastructure.Persistence.DbContext;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging; // <-- WAŻNE: Dodaj using dla ILogger
+using Microsoft.Extensions.Logging;
 using Shared.DTOs.Booking;
 
 namespace Infrastructure.Services
@@ -11,30 +11,27 @@ namespace Infrastructure.Services
     public class BookingService : IBookingService
     {
         private readonly SystemRezerwacjiDbContext _context;
-        private readonly ILogger<BookingService> _logger; // <-- DODAJ POLE DLA LOGGERA
-
-        // Zmodyfikuj konstruktor, aby wstrzykiwał ILogger
+        private readonly ILogger<BookingService> _logger;
+        
         public BookingService(SystemRezerwacjiDbContext context, ILogger<BookingService> logger)
         {
             _context = context;
-            _logger = logger; // <-- PRZYPISZ LOGGER
+            _logger = logger;
         }
+        
+        
 
         public async Task<BookingDto?> CreateBookingAsync(BookingRequestDto request, Guid userId)
         {
-            // --- POCZĄTEK SEKCJI DIAGNOSTYCZNEJ ---
             _logger.LogInformation("--- Rozpoczynanie tworzenia rezerwacji dla zasobu: {ResourceId} ---", request.ResourceId);
             _logger.LogInformation("Nowy termin: Od {StartTime} do {EndTime}", request.StartTime, request.EndTime);
-            // --- KONIEC SEKCJI DIAGNOSTYCZNEJ ---
 
             if (request.StartTime is null || request.EndTime is null)
             {
                 _logger.LogError("Błąd walidacji: StartTime lub EndTime jest nullem.");
                 return null;
             }
-
-            // --- POCZĄTEK SEKCJI DIAGNOSTYCZNEJ ---
-            // Pobierz WSZYSTKIE istniejące rezerwacje dla tego zasobu do logów
+            
             var existingBookingsForResource = await _context.Bookings
                 .Where(b => b.ResourceId == request.ResourceId)
                 .ToListAsync();
@@ -45,13 +42,12 @@ namespace Infrastructure.Services
             }
             else
             {
-                _logger.LogWarning("DIAGNOSTYKA: Znaleziono {Count} istniejących rezerwacji dla zasobu {ResourceId}:", existingBookingsForResource.Count, request.ResourceId);
+                _logger.LogDebug("Znaleziono {Count} istniejących rezerwacji dla zasobu {ResourceId}.", existingBookingsForResource.Count, request.ResourceId);
                 foreach (var existing in existingBookingsForResource)
                 {
                     _logger.LogWarning("- Istniejąca rezerwacja ID: {BookingId}, Termin: Od {StartTime} do {EndTime}, Status: {Status}", existing.Id, existing.StartTime, existing.EndTime, existing.Status);
                 }
             }
-            // --- KONIEC SEKCJI DIAGNOSTYCZNEJ ---
 
             var isConflict = await _context.Bookings
                 .AnyAsync(b => b.ResourceId == request.ResourceId &&
@@ -104,9 +100,11 @@ namespace Infrastructure.Services
             };
         }
 
-        // ... reszta Twoich metod (GetUserBookingsAsync, UpdateBookingAsync, itd.) pozostaje bez zmian ...
-        // Poniżej wklejam resztę Twojego kodu dla kompletności
-        
+        public Task<BookingDto?> CreateBookingAsync(BookingRequestDto bookingRequest)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<List<BookingDto>> GetUserBookingsAsync(Guid userId)
         {
             var bookings = await _context.Bookings
@@ -186,6 +184,11 @@ namespace Infrastructure.Services
                 ResourceName = booking.Resource.Name,
                 UserName = booking.User.UserName ?? booking.User.Email
             };
+        }
+        
+        public Task<List<BookingDto>?> GetBookingsForUserAsync(Guid userId)
+        {
+            return Task.FromResult<List<BookingDto>>(null);
         }
     }
 }

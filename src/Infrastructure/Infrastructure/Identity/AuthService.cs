@@ -17,8 +17,7 @@ public class AuthService : IAuthService
     private readonly SignInManager<User> _signInManager;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly JwtSettings _jwtSettings;
-
-    // POPRAWIONY KONSTRUKTOR - zawiera wszystkie potrzebne zależności
+    
     public AuthService(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
@@ -30,8 +29,7 @@ public class AuthService : IAuthService
         _roleManager = roleManager;
         _jwtSettings = jwtSettings.Value;
     }
-
-    // POPRAWIONA METODA LOGOWANIA - używa SignInManager do obsługi blokady
+    
     public async Task<AuthResponseDto> LoginUserAsync(LoginRequestDto loginDto)
     {
         var user = await _userManager.FindByEmailAsync(loginDto.Email);
@@ -102,10 +100,9 @@ public class AuthService : IAuthService
     
     public Task Logout()
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
-
-    // Prywatna metoda pomocnicza do generowania tokenu
+    
     private SecurityToken GenerateJwtToken(User user, IList<string> userRoles)
     {
         var authClaims = new List<Claim>

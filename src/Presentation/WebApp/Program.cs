@@ -8,6 +8,7 @@ using WebApp.Auth;
 using WebApp.Services;
 
 using Application.Interfaces.Persistence;
+using Application.Interfaces.User;
 
 namespace WebApp
 {
@@ -41,6 +42,9 @@ namespace WebApp
                 provider.GetRequiredService<AuthService>());
             builder.Services.AddScoped<IAuthService>(provider => 
                 provider.GetRequiredService<AuthService>());
+            
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
 
             // ✅ REJESTRACJA SERWISÓW APLIKACJI
             // Te linie teraz mapują poprawne interfejsy do ich klienckich implementacji

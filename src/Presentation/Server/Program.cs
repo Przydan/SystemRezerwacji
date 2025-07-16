@@ -2,6 +2,7 @@ using System.Text;
 using Application.Interfaces.Booking;
 using Application.Interfaces.Identity;
 using Application.Interfaces.Persistence;
+using Application.Interfaces.User;
 using Application.Services;
 using Domain.Entities;
 using Infrastructure.Authentication;
@@ -161,6 +162,7 @@ public class Program
     private static void ConfigureApplicationServices(WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IUserService, UserService>();
         
         builder.Services.AddScoped<IResourceTypeRepository, ResourceTypeRepository>();
         builder.Services.AddScoped<IResourceRepository, ResourceRepository>();

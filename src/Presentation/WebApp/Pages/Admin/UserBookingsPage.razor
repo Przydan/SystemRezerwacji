@@ -1,16 +1,29 @@
 @page "/admin/user-bookings"
 @using Application.Interfaces.Booking
+@using Application.Interfaces.User
+@using Shared.DTOs.User
+@using Shared.DTOs.Booking
 @attribute [Authorize(Roles = "Administrator")]
-@inject HttpClient Http
+@inject IUserService UserService
 @inject IBookingService BookingService
+@inject ISnackbar Snackbar
 
 <PageTitle>Rezerwacje użytkowników</PageTitle>
-<MudText Typo="Typo.h4">Rezerwacje użytkowników</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Rezerwacje użytkowników</MudText>
 
-@if (users == null) { <MudProgressCircular Indeterminate="true" /> }
+@if (users == null)
+{
+    <MudText>Ładowanie użytkowników...</MudText>
+    <MudProgressCircular Indeterminate="true" />
+}
 else
 {
-    <MudSelect T="Guid?" Label="Wybierz użytkownika" @bind-Value="selectedUserId">
+    <MudSelect T="Guid?"
+               Label="Wybierz użytkownika"
+               @bind-Value="selectedUserId"
+               For="@(() => selectedUserId)"
+               Validation="@(new Func<Guid?, string>(ValidateUserSelection))"
+               @bind-Value:after="OnUserSelectionChanged">
         @foreach (var user in users)
         {
             <MudSelectItem Value="@((Guid?)user.Id)">@user.Email</MudSelectItem>
@@ -18,38 +31,108 @@ else
     </MudSelect>
 }
 
-@if (selectedUserBookings != null)
+@if (isLoadingBookings)
 {
-    <MudText Typo="Typo.h6" Class="mt-4">Rezerwacje dla wybranego użytkownika:</MudText>
+    <MudText Class="mt-4">Ładowanie rezerwacji...</MudText>
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (selectedUserBookings != null)
+{
+    <MudText Typo="Typo.h6" Class="mt-6">Rezerwacje dla: @selectedUserEmail</MudText>
     @if (selectedUserBookings.Any())
     {
+        <MudSimpleTable Class="mt-4" Hover="true" Bordered="true" Striped="true">
+            <thead>
+                <tr>
+                    <th>Zasób</th>
+                    <th>Data rozpoczęcia</th>
+                    <th>Data zakończenia</th>
+                    <th>Status</th>
+                    <th>Notatki</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in selectedUserBookings)
+                {
+                    <tr>
+                        <td>@booking.ResourceName</td>
+                        <td>@booking.StartTime.ToString("g")</td>
+                        <td>@booking.EndTime.ToString("g")</td>
+                        <td>@booking.Status</td>
+                        <td>@booking.Notes</td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
     }
     else
     {
-        <MudText>Ten użytkownik nie ma rezerwacji.</MudText>
+        <MudAlert Severity="Severity.Info" Class="mt-4">Wybrany użytkownik nie ma żadnych rezerwacji.</MudAlert>
     }
 }
 
-@code {
-    private class UserDisplayDto {
-        public Guid Id { get; set; }
-        public string? Email { get; set; }
-    }
 
-    private List<UserDisplayDto>? users;
+@code {
+    private List<UserDto>? users;
     private List<BookingDto>? selectedUserBookings;
     private Guid? selectedUserId;
+    private string? selectedUserEmail;
+    private bool isLoadingBookings = false;
+
+    // Prosta walidacja dla przykładu
+    private string ValidateUserSelection(Guid? userId)
+    {
+        if (!userId.HasValue)
+            return "Wybór użytkownika jest wymagany.";
+        return null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        users = await Http.GetFromJsonAsync<List<UserDisplayDto>>("api/users");
+        try
+        {
+            // Pobieramy wszystkich użytkowników, aby wypełnić listę
+            users = await UserService.GetAllUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Błąd podczas ładowania użytkowników: {ex.Message}", Severity.Error);
+        }
     }
 
-    protected override async Task OnParametersSetAsync()
+    private async Task OnUserSelectionChanged()
     {
-        if (selectedUserId.HasValue)
+        if (selectedUserId.HasValue && selectedUserId.Value != Guid.Empty)
         {
-            selectedUserBookings = await BookingService.GetUserBookingsAsync(selectedUserId.Value);
+            isLoadingBookings = true;
+            // Wyczyść poprzednie rezerwacje na czas ładowania
+            selectedUserBookings = null; 
+            
+            // Znajdź email wybranego użytkownika do wyświetlenia
+            selectedUserEmail = users?.FirstOrDefault(u => u.Id == selectedUserId.Value)?.Email;
+
+            try
+            {
+                // Użyj metody, którą stworzyliśmy do pobierania rezerwacji konkretnego użytkownika
+                selectedUserBookings = await BookingService.GetBookingsForUserAsync(selectedUserId.Value);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Błąd podczas pobierania rezerwacji: {ex.Message}", Severity.Error);
+                selectedUserBookings = new List<BookingDto>(); // Ustaw pustą listę w razie błędu
+            }
+            finally
+            {
+                isLoadingBookings = false;
+            }
         }
+        else
+        {
+            // Jeśli użytkownik odznaczy wybór, czyścimy listę rezerwacji
+            selectedUserBookings = null;
+            selectedUserEmail = null;
+        }
+        
+        // Nie ma potrzeby wywoływania StateHasChanged(), Blazor robi to automatycznie po obsłudze zdarzenia
     }
 }
