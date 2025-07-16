@@ -1,36 +1,41 @@
-@namespace WebApp.Layout
-
-@inject IResourceService ResourceService
+@* @page "/bookings/new/{ResourceId:guid}" *@
+@attribute [Authorize]
+@using Application.Interfaces.Booking
+@using Shared.DTOs.Booking
+@using WebApp.Components
 @inject IBookingService BookingService
-@inject NavigationManager Nav
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
-<h3>Nowa rezerwacja</h3>
+<PageTitle>Nowa rezerwacja</PageTitle>
+<MudText Typo="Typo.h4" GutterBottom="true">Tworzenie nowej rezerwacji</MudText>
 
-@if (resources is null)
-{
-    <p><em>Ładowanie zasobów…</em></p>
-}
-else
-{
-    <BookingForm
-        Model="model"
-        Resources="resources"
-        OnValidSubmit="HandleCreate"/>
-}
+@* 👇 Tutaj używasz swojego nowego, poprawnego komponentu 👇 *@
+<BookingForm Model="newBooking" OnValidSubmit="HandleCreateBooking" ButtonText="Utwórz Rezerwację" />
 
 @code {
-    private BookingRequestDto model = new();
-    private List<ResourceDto>? resources;
+    [Parameter]
+    public Guid ResourceId { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private BookingRequestDto newBooking = new();
+
+    protected override void OnInitialized()
     {
-        resources = await ResourceService.GetResourcesAsync();
+        newBooking.ResourceId = this.ResourceId;
     }
 
-    private async Task HandleCreate(BookingRequestDto dto)
+    private async Task HandleCreateBooking()
     {
-        await BookingService.CreateBookingAsync(dto);
-        Nav.NavigateTo("/my-reservations");
+        var result = await BookingService.CreateBookingAsync(newBooking); 
+        
+        if (result != null)
+        {
+            Snackbar.Add("Rezerwacja została utworzona!", Severity.Success);
+            NavigationManager.NavigateTo("/my-reservations");
+        }
+        else
+        {
+            Snackbar.Add("Nie udało się utworzyć rezerwacji (konflikt terminów lub inny błąd).", Severity.Error);
+        }
     }
-
 }

@@ -1,0 +1,167 @@
+@page "/admin/user-bookings"
+@using Application.Interfaces.Booking
+@using Application.Interfaces.User
+@using Shared.DTOs.User
+@using Shared.DTOs.Booking
+@attribute [Authorize(Roles = "Administrator")]
+@inject IUserService UserService
+@inject IBookingService BookingService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Rezerwacje użytkowników</PageTitle>
+<MudText Typo="Typo.h4" GutterBottom="true">Rezerwacje użytkowników</MudText>
+
+@* Kod wyboru użytkownika pozostaje bez zmian *@
+@if (users == null)
+{
+    <MudText>Ładowanie użytkowników...</MudText>
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudSelect T="Guid?"
+               Label="Wybierz użytkownika"
+               @bind-Value="selectedUserId"
+               For="@(() => selectedUserId)"
+               Validation="@(new Func<Guid?, string>(ValidateUserSelection))"
+               @bind-Value:after="OnUserSelectionChanged">
+        @foreach (var user in users)
+        {
+            <MudSelectItem Value="@((Guid?)user.Id)">@user.Email</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+@if (isLoadingBookings)
+{
+    <MudText Class="mt-4">Ładowanie rezerwacji...</MudText>
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (selectedUserBookings != null)
+{
+    <MudText Typo="Typo.h6" Class="mt-6">Rezerwacje dla: @selectedUserEmail</MudText>
+    @if (selectedUserBookings.Any())
+    {
+        <MudSimpleTable Class="mt-4" Hover="true" Bordered="true" Striped="true">
+            <thead>
+                <tr>
+                    <th>Zasób</th>
+                    <th>Data rozpoczęcia</th>
+                    <th>Data zakończenia</th>
+                    <th>Status</th>
+                    <th>Notatki</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in selectedUserBookings)
+                {
+                    <tr>
+                        <td>@booking.ResourceName</td>
+                        <td>@booking.StartTime.ToString("g")</td>
+                        <td>@booking.EndTime.ToString("g")</td>
+                        <td>@booking.Status</td>
+                        <td>@booking.Notes</td>
+                        <td> @* --- POPRAWKA 2: Poprawna struktura komórki --- *@
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Color="Color.Error" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => ConfirmAndDeleteBooking(booking))" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Info" Class="mt-4">Wybrany użytkownik nie ma żadnych rezerwacji.</MudAlert>
+    }
+}
+
+
+@code {
+    private List<UserDto>? users;
+    private List<BookingDto>? selectedUserBookings;
+    private Guid? selectedUserId;
+    private string? selectedUserEmail;
+    private bool isLoadingBookings = false;
+
+    private string ValidateUserSelection(Guid? userId)
+    {
+        if (!userId.HasValue)
+            return "Wybór użytkownika jest wymagany.";
+        return null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            users = await UserService.GetAllUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Błąd podczas ładowania użytkowników: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnUserSelectionChanged()
+    {
+        if (selectedUserId.HasValue && selectedUserId.Value != Guid.Empty)
+        {
+            isLoadingBookings = true;
+            selectedUserBookings = null;
+            selectedUserEmail = users?.FirstOrDefault(u => u.Id == selectedUserId.Value)?.Email;
+
+            try
+            {
+                selectedUserBookings = await BookingService.GetBookingsForUserAsync(selectedUserId.Value);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Błąd podczas pobierania rezerwacji: {ex.Message}", Severity.Error);
+                selectedUserBookings = new List<BookingDto>();
+            }
+            finally
+            {
+                isLoadingBookings = false;
+            }
+        }
+        else
+        {
+            selectedUserBookings = null;
+            selectedUserEmail = null;
+        }
+    }
+    
+    private async Task ConfirmAndDeleteBooking(BookingDto bookingToDelete)
+    {
+        var parameters = new DialogParameters
+        {
+            ["ContentText"] = $"Czy na pewno chcesz usunąć rezerwację dla zasobu '{bookingToDelete.ResourceName}'?",
+            ["ButtonText"] = "Usuń",
+            ["Color"] = Color.Error
+        };
+
+        // --- POPRAWKA 1: Wywołanie metody na instancji serwisu i użycie wersji asynchronicznej ---
+        var dialog = await DialogService.ShowAsync<WebApp.Components.ConfirmDeleteDialog>("Potwierdzenie usunięcia", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var success = await BookingService.AdminCancelBookingAsync(bookingToDelete.Id);
+            if (success)
+            {
+                selectedUserBookings?.Remove(bookingToDelete);
+                Snackbar.Add("Rezerwacja została usunięta.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Nie udało się usunąć rezerwacji.", Severity.Error);
+            }
+            StateHasChanged();
+        }
+    }
+}

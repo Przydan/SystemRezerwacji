@@ -7,17 +7,17 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.14"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.14" PrivateAssets="all"/>
-        <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.16"/>
-        <PackageReference Include="MudBlazor" Version="8.7.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.14"/>
+        <PackageReference Include="MudBlazor" Version="8.9.0"/>
         <PackageReference Include="Blazored.LocalStorage" Version="4.5.0"/>
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.11.0"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1"/>
         <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1"/>
     </ItemGroup>
     <ItemGroup>
         <Folder Include="Auth\"/>
-        <Folder Include="Services\"/>
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="..\..\Core\Application\Application.csproj" />
         <ProjectReference Include="..\..\Shared\Shared.csproj"/>
     </ItemGroup>
     <ItemGroup>

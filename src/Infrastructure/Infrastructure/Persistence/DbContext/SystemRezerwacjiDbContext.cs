@@ -11,97 +11,40 @@ public class SystemRezerwacjiDbContext : IdentityDbContext<User, IdentityRole<Gu
         : base(options)
     {
     }
-
-    // DbSet dla każdej z Twoich głównych encji
+    
     public DbSet<Resource> Resources { get; set; }
     public DbSet<ResourceType> ResourceTypes { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<Feature> Features { get; set; }
     public DbSet<ResourceFeature> ResourceFeatures { get; set; }
-    // Encja User jest już zarządzana przez IdentityDbContext (jako DbSet<User>)
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder); // Niezbędne przy dziedziczeniu z IdentityDbContext
+        base.OnModelCreating(modelBuilder); // To jest WAŻNE dla Identity
 
-        // Tutaj będziemy dodawać konfigurację Fluent API dla naszych encji
-        // (relacje, klucze, ograniczenia, indeksy, seeding danych)
+        // --- Konfiguracja relacji wiele-do-wielu dla Resource <--> Feature ---
 
-        // Przykład podstawowej konfiguracji dla Resource (rozwiniemy to):
-        modelBuilder.Entity<Resource>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-            // ... więcej konfiguracji dla Resource ...
+        // 1. Zdefiniuj klucz złożony dla tabeli łączącej ResourceFeature
+        modelBuilder.Entity<ResourceFeature>()
+            .HasKey(rf => new { rf.ResourceId, rf.FeatureId });
 
-            // Definicja relacji Resource 1 --- * ResourceType
-            entity.HasOne(d => d.ResourceType)
-                .WithMany(p => p.Resources)
-                .HasForeignKey(d => d.ResourceTypeId)
-                .OnDelete(DeleteBehavior.Restrict); // Zapobiega usunięciu typu, jeśli są do niego przypisane zasoby
-        });
+        // 2. Zdefiniuj relację od strony Resource
+        modelBuilder.Entity<ResourceFeature>()
+            .HasOne(rf => rf.Resource)
+            .WithMany(r => r.ResourceFeatures) // <-- wskazuje na ICollection<ResourceFeature> w klasie Resource
+            .HasForeignKey(rf => rf.ResourceId);
 
-        // Przykład konfiguracji dla tabeli łączącej ResourceFeature
-        modelBuilder.Entity<ResourceFeature>(entity =>
-        {
-            // Definicja klucza złożonego
-            entity.HasKey(rf => new { rf.ResourceId, rf.FeatureId });
+        // 3. Zdefiniuj relację od strony Feature
+        modelBuilder.Entity<ResourceFeature>()
+            .HasOne(rf => rf.Feature)
+            .WithMany(f => f.ResourceFeatures) // <-- wskazuje na ICollection<ResourceFeature> w klasie Feature
+            .HasForeignKey(rf => rf.FeatureId);
 
-            // Relacja do Resource
-            entity.HasOne(rf => rf.Resource)
-                .WithMany(r =>
-                    r.ResourceFeatures) // Upewnij się, że Resource ma ICollection<ResourceFeature> ResourceFeatures
-                .HasForeignKey(rf => rf.ResourceId);
+        // --- Pozostałe konfiguracje ---
+        modelBuilder.Entity<ResourceType>()
+            .HasIndex(rt => rt.Name).IsUnique();
 
-            // Relacja do Feature
-            entity.HasOne(rf => rf.Feature)
-                .WithMany(f =>
-                    f.ResourceFeatures) // Upewnij się, że Feature ma ICollection<ResourceFeature> ResourceFeatures
-                .HasForeignKey(rf => rf.FeatureId);
-        });
-
-        // Konfiguracja dla Booking
-        modelBuilder.Entity<Booking>(entity =>
-        {
-            entity.Property(e => e.Status)
-                .HasConversion<string>() // Przechowuj enum jako string
-                .HasMaxLength(50); // Maksymalna długość dla stringa enum
-
-            // Relacja Booking * --- 1 User (Użytkownik może mieć wiele rezerwacji)
-            entity.HasOne(b => b.User)
-                .WithMany(u => u.Bookings)
-                .HasForeignKey(b => b.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // Nie usuwaj użytkownika, jeśli ma rezerwacje
-
-            // Relacja Booking * --- 1 Resource (Zasób może mieć wiele rezerwacji)
-            entity.HasOne(b => b.Resource)
-                .WithMany(r => r.Bookings)
-                .HasForeignKey(b => b.ResourceId)
-                .OnDelete(DeleteBehavior.Cascade); // Usunięcie zasobu usuwa jego rezerwacje (do dyskusji)
-        });
-
-        // Konfiguracja dla ResourceType
-        modelBuilder.Entity<ResourceType>(entity =>
-        {
-            entity.Property(rt => rt.Name).IsRequired().HasMaxLength(100);
-            entity.HasIndex(rt => rt.Name).IsUnique(); // Nazwa typu zasobu musi być unikalna
-        });
-
-        // Konfiguracja dla Feature
-        modelBuilder.Entity<Feature>(entity =>
-        {
-            entity.Property(f => f.Name).IsRequired().HasMaxLength(100);
-            entity.HasIndex(f => f.Name).IsUnique(); // Nazwa cechy musi być unikalna
-        });
-
-        // Konfiguracja dla User (w ramach Identity)
-        // IdentityDbContext sam konfiguruje większość dla User, ale można dostosować
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.Property(u => u.FirstName).HasMaxLength(50);
-            entity.Property(u => u.LastName).HasMaxLength(50);
-            // Dodatkowe pola z planu dla User można tu konfigurować, np. Department, JobTitle
-        });
+        modelBuilder.Entity<Feature>()
+            .HasIndex(f => f.Name).IsUnique();
     }
 }

@@ -1,35 +1,58 @@
 using System.Net.Http.Json;
+using Application.Interfaces.Persistence;
 using Shared.DTOs.Resource;
 
-namespace WebApp.Services
+namespace WebApp.Services;
+
+public class ResourceService : IResourceService
 {
-    public interface IResourceService
+    private readonly HttpClient _httpClient;
+
+    public ResourceService(HttpClient httpClient)
     {
-        Task<List<ResourceDto>> GetResourcesAsync();
-        Task CreateResourceAsync(ResourceDto model);
-        Task UpdateResourceAsync(ResourceDto model);
+        _httpClient = httpClient;
     }
 
-    public class ResourceService : IResourceService
+    public async Task<ResourceDto?> GetResourceByIdAsync(Guid id)
     {
-        private readonly HttpClient _http;
-        public ResourceService(HttpClient http) => _http = http;
-
-        public async Task<List<ResourceDto>> GetResourcesAsync()
+        try
         {
-            // GetFromJsonAsync może zwrócić null, dlatego harujący fallback
-            var list = await _http.GetFromJsonAsync<List<ResourceDto>>("api/resources");
-            return list ?? new List<ResourceDto>();
+            return await _httpClient.GetFromJsonAsync<ResourceDto>($"api/resource/{id}");
         }
-
-        public Task CreateResourceAsync(ResourceDto model)
+        catch (HttpRequestException) // Obsługuje błędy sieciowe lub statusy 404/500
         {
-            throw new NotImplementedException();
+            return null;
         }
+    }
 
-        public Task UpdateResourceAsync(ResourceDto model)
+    public async Task<List<ResourceDto>> GetAllResourcesAsync()
+    {
+        var resources = await _httpClient.GetFromJsonAsync<List<ResourceDto>>("api/resource");
+        return resources ?? new List<ResourceDto>();
+    }
+
+    public async Task<ResourceDto> CreateResourceAsync(CreateResourceRequestDto createDto)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/resource", createDto);
+        response.EnsureSuccessStatusCode(); // Rzuci wyjątek, jeśli odpowiedź nie jest sukcesem
+        
+        var createdResource = await response.Content.ReadFromJsonAsync<ResourceDto>();
+        if (createdResource is null)
         {
-            throw new NotImplementedException();
+            throw new ApplicationException("API did not return the created resource.");
         }
+        return createdResource;
+    }
+
+    public async Task<bool> UpdateResourceAsync(Guid id, UpdateResourceRequestDto updateDto)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/resource/{id}", updateDto);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteResourceAsync(Guid id)
+    {
+        var response = await _httpClient.DeleteAsync($"api/resource/{id}");
+        return response.IsSuccessStatusCode;
     }
 }
