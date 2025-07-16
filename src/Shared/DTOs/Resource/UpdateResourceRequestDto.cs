@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Shared.DTOs.Resource;
 
 public class UpdateResourceRequestDto
@@ -7,5 +9,6 @@ public class UpdateResourceRequestDto
     public string? Description { get; set; }
     public string? Location { get; set; }
     public int Capacity { get; set; }
-    public int ResourceTypeId { get; set; }
+    [Required(ErrorMessage = "Typ zasobu jest wymagany.")]
+    public Guid ResourceTypeId { get; set; }
 }

@@ -1,59 +1,41 @@
-@page "/create-booking"
-@using System.Security.Claims
+@* @page "/bookings/new/{ResourceId:guid}" *@
+@attribute [Authorize]
 @using Application.Interfaces.Booking
-@using Application.Interfaces.Persistence // Poprawny using dla IResourceService
 @using Shared.DTOs.Booking
-@using Shared.DTOs.Resource
 @using WebApp.Components
-@using IResourceService = Application.Interfaces.Persistence.IResourceService
-@inject IResourceService ResourceService
 @inject IBookingService BookingService
-@inject AuthenticationStateProvider AuthStateProvider
-@inject NavigationManager Nav
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
-<h3>Nowa rezerwacja</h3>
+<PageTitle>Nowa rezerwacja</PageTitle>
+<MudText Typo="Typo.h4" GutterBottom="true">Tworzenie nowej rezerwacji</MudText>
 
-@if (resources is null)
-{
-    <p><em>Ładowanie zasobów…</em></p>
-}
-else
-{
-    <BookingForm
-        Model="model"
-        Resources="resources"
-        OnValidSubmit="HandleCreate"/>
-}
+@* 👇 Tutaj używasz swojego nowego, poprawnego komponentu 👇 *@
+<BookingForm Model="newBooking" OnValidSubmit="HandleCreateBooking" ButtonText="Utwórz Rezerwację" />
 
 @code {
-    private BookingRequestDto model = new();
-    private List<ResourceDto>? resources;
+    [Parameter]
+    public Guid ResourceId { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private BookingRequestDto newBooking = new();
+
+    protected override void OnInitialized()
     {
-        // Ta linia będzie wymagała poprawki w kolejnym kroku, na razie ją zostawiamy.
-        resources = await ResourceService.GetAllResourcesAsync(); 
+        newBooking.ResourceId = this.ResourceId;
     }
 
-    private async Task HandleCreate(BookingRequestDto dto)
+    private async Task HandleCreateBooking()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (Guid.TryParse(userIdString, out var userId))
+        var result = await BookingService.CreateBookingAsync(newBooking); 
+        
+        if (result != null)
         {
-            // Przekazujemy DTO oraz ID zalogowanego użytkownika
-            var createdBooking = await BookingService.CreateBookingAsync(dto, userId);
-            if (createdBooking is not null)
-            {
-                Nav.NavigateTo("/my-reservations");
-            }
-            // Opcjonalnie: obsłuż błąd, jeśli rezerwacja nie została utworzona
+            Snackbar.Add("Rezerwacja została utworzona!", Severity.Success);
+            NavigationManager.NavigateTo("/my-reservations");
         }
         else
         {
-            Nav.NavigateTo("/login");
+            Snackbar.Add("Nie udało się utworzyć rezerwacji (konflikt terminów lub inny błąd).", Severity.Error);
         }
     }
 }

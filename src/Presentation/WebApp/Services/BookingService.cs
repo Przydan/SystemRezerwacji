@@ -29,6 +29,14 @@ public class BookingService : IBookingService
         return await response.Content.ReadFromJsonAsync<BookingDto>();
     }
 
+    public async Task<BookingDto?> CreateBookingAsync(BookingRequestDto bookingRequest)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/bookings", bookingRequest);
+        return response.IsSuccessStatusCode 
+            ? await response.Content.ReadFromJsonAsync<BookingDto>() 
+            : null;
+    }
+
     public async Task<bool> CancelBookingAsync(Guid bookingId, Guid userId)
     {
         // userId nie jest potrzebne, serwer zweryfikuje je na podstawie tokenu.
@@ -47,5 +55,12 @@ public class BookingService : IBookingService
     {
         // userId nie jest potrzebne, serwer zweryfikuje je na podstawie tokenu.
         return await _httpClient.GetFromJsonAsync<BookingDto>($"api/bookings/{bookingId}");
+    }
+    
+    public async Task<List<BookingDto>?> GetBookingsForUserAsync(Guid userId)
+    {
+        // Ten endpoint jest zabezpieczony rolą Administrator na serwerze
+        var bookings = await _httpClient.GetFromJsonAsync<List<BookingDto>>($"api/bookings/user/{userId}");
+        return bookings ?? new List<BookingDto>();
     }
 }

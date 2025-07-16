@@ -1,7 +1,7 @@
 @using Shared.DTOs.Booking
 
 <MudCard>
-    <MudForm Model="@Model" @ref="@form" IsValid="@isValid">
+    <MudForm @ref="@form" @bind-IsValid="isValid">
         <MudCardContent>
             <MudGrid>
                 <MudItem xs="12" sm="6">

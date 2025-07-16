@@ -4,9 +4,6 @@ namespace Shared.DTOs.Resource;
 
 public class UpdateResourceTypeRequestDto
 {
-    [Required]
-    public Guid Id { get; set; }
-
     [Required(ErrorMessage = "Nazwa jest wymagana.")]
     [StringLength(100, ErrorMessage = "Nazwa nie może być dłuższa niż 100 znaków.")]
     public string Name { get; set; } = string.Empty;
