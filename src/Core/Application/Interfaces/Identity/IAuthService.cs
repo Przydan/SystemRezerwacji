@@ -4,9 +4,9 @@ namespace Application.Interfaces.Identity;
 
 public interface IAuthService
 {
-    Task<AuthResponseDto> RegisterUserAsync(RegisterUserDto registerDto, string defaultRole = "User");
+    Task<AuthResponseDto> RegisterUserAsync(RegisterRequestDto registerDto, string defaultRole = "User");
 
-    Task<AuthResponseDto> LoginUserAsync(LoginUserDto loginDto);
+    Task<AuthResponseDto> LoginUserAsync(LoginRequestDto loginDto); 
 
     // W przyszłości można dodać:
     // Task <AuthResponseDto> RefreshTokenAsync(string token);

@@ -1,8 +1,136 @@
-model = new BookingRequestDto
-{
-Id = existing.Id,
-ResourceId = existing.ResourceId,
-StartTime = existing.StartTime,
-EndTime = existing.EndTime,
-Notes = existing.Notes
-};
+@* @page "/edit-booking/{id:guid}" *@
+@* @page "/admin/edit-booking/{id:guid}" *@
+@* *@
+@* @attribute [Authorize] // Wymaga, aby użytkownik był zalogowany *@
+@* *@
+@* @inject IBookingService BookingService *@
+@* @inject IResourceService ResourceService *@
+@* @inject NavigationManager NavManager *@
+@* @inject AuthenticationStateProvider AuthStateProvider *@
+@* *@
+@* <h3>Edytuj rezerwację</h3> *@
+@* *@
+@* @if (model == null || resources == null) *@
+@* { *@
+@*     <MudText>Ładowanie danych rezerwacji...</MudText> *@
+@*     <MudProgressCircular Indeterminate="true" /> *@
+@* } *@
+@* else *@
+@* { *@
+@*     <EditForm Model="model" OnValidSubmit="HandleUpdate"> *@
+@*         <DataAnnotationsValidator /> *@
+@*          *@
+@*         <MudCard> *@
+@*             <MudCardContent> *@
+@*                 <MudSelect T="Guid" Label="Zasób" @bind-Value="model.ResourceId" For="@(() => model.ResourceId)"> *@
+@*                     @foreach (var resource in resources) *@
+@*                     { *@
+@*                         <MudSelectItem T="Guid" Value="@resource.Id">@resource.Name</MudSelectItem> *@
+@*                     } *@
+@*                 </MudSelect> *@
+@*                 <MudDatePicker Label="Data rozpoczęcia" @bind-Date="model.StartTime" /> *@
+@*                 <MudTimePicker Label="Czas rozpoczęcia" @bind-Time="model.StartTime" /> *@
+@*                 <MudDatePicker Label="Data zakończenia" @bind-Date="model.EndTime" /> *@
+@*                 <MudTimePicker Label="Czas zakończenia" @bind-Time="model.EndTime" /> *@
+@*                 <MudTextField T="string" Label="Notatki" @bind-Value="model.Notes" For="@(() => model.Notes)" Lines="3" /> *@
+@*             </MudCardContent> *@
+@*             <MudCardActions> *@
+@*                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Zapisz zmiany</MudButton> *@
+@*             </MudCardActions> *@
+@*         </MudCard> *@
+@* *@
+@*         @if (!string.IsNullOrEmpty(errorMessage)) *@
+@*         { *@
+@*             <MudAlert Severity="Severity.Error" Class="mt-4">@errorMessage</MudAlert> *@
+@*         } *@
+@*     </EditForm> *@
+@* } *@
+@* *@
+@* @code { *@
+@*     [Parameter] *@
+@*     public Guid id { get; set; } *@
+@* *@
+@*     // Zmienne stanu komponentu *@
+@*     private UpdateBookingRequestDto? model; // Używamy jednego, spójnego modelu do edycji *@
+@*     private List<ResourceDto>? resources; *@
+@*     private string? errorMessage; *@
+@*     private bool isAdmin = false; *@
+@* *@
+@*     protected override async Task OnInitializedAsync() *@
+@*     { *@
+@*         // Sprawdź rolę użytkownika *@
+@*         var authState = await AuthStateProvider.GetAuthenticationStateAsync(); *@
+@*         var user = authState.User; *@
+@*         isAdmin = user.IsInRole("Admin"); // Zakładam, że rola admina to "Admin" *@
+@* *@
+@*         try *@
+@*         { *@
+@*             // Krok 1: Zawsze pobieraj zasoby *@
+@*             resources = await ResourceService.GetResourcesAsync(); *@
+@* *@
+@*             // Krok 2: Pobierz dane rezerwacji w zależności od roli *@
+@*             BookingDto? existingBooking; *@
+@*             if (isAdmin) *@
+@*             { *@
+@*                 // ADMIN: Pobiera dowolną rezerwację po ID *@
+@*                 // UWAGA: Potrzebujesz metody GetBookingByIdAsync w Twoim BookingService! *@
+@*                 existingBooking = await BookingService.GetBookingByIdAsync(id);  *@
+@*             } *@
+@*             else *@
+@*             { *@
+@*                 // USER: Pobiera tylko ze swoich rezerwacji *@
+@*                 var myBookings = await BookingService.GetMyBookingsAsync(); *@
+@*                 existingBooking = myBookings?.FirstOrDefault(b => b.Id == id); *@
+@*             } *@
+@* *@
+@*             // Krok 3: Sprawdź, czy rezerwacja istnieje i zmapuj ją na model *@
+@*             if (existingBooking == null) *@
+@*             { *@
+@*                 errorMessage = "Nie znaleziono rezerwacji lub nie masz do niej dostępu."; *@
+@*                 // Można opcjonalnie poczekać i przekierować *@
+@*                 await Task.Delay(3000);  *@
+@*                 NavManager.NavigateTo(isAdmin ? "/admin/all-reservations" : "/my-reservations"); *@
+@*                 return; *@
+@*             } *@
+@* *@
+@*             model = new UpdateBookingRequestDto *@
+@*             { *@
+@*                 ResourceId = existingBooking.ResourceId, *@
+@*                 StartTime = existingBooking.StartTime, *@
+@*                 EndTime = existingBooking.EndTime, *@
+@*                 Notes = existingBooking.Notes *@
+@*             }; *@
+@*         } *@
+@*         catch (Exception ex) *@
+@*         { *@
+@*             Console.WriteLine(ex); // Loguj pełny błąd do konsoli deweloperskiej *@
+@*             errorMessage = "Nie udało się załadować danych."; *@
+@*         } *@
+@*     } *@
+@* *@
+@*     private async Task HandleUpdate() *@
+@*     { *@
+@*         if (model == null) return; // Zabezpieczenie *@
+@* *@
+@*         errorMessage = null; *@
+@*         try *@
+@*         { *@
+@*             // Wywołujemy poprawną wersję UpdateBookingAsync *@
+@*             var success = await BookingService.UpdateBookingAsync(id, model); *@
+@*             if (success) *@
+@*             { *@
+@*                 // Przekieruj w zależności od roli *@
+@*                 NavManager.NavigateTo(isAdmin ? "/admin/all-reservations" : "/my-reservations"); *@
+@*             } *@
+@*             else *@
+@*             { *@
+@*                 errorMessage = "Aktualizacja nie powiodła się. Być może termin jest już zajęty."; *@
+@*             } *@
+@*         } *@
+@*         catch (Exception ex) *@
+@*         { *@
+@*             Console.WriteLine(ex); *@
+@*             errorMessage = "Wystąpił nieoczekiwany błąd serwera."; *@
+@*         } *@
+@*     } *@
+@* } *@

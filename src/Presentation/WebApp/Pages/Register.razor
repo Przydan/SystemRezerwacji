@@ -14,6 +14,20 @@
         <DataAnnotationsValidator/>
 
         <MudTextField T="string"
+                      Label="Imię"
+                      @bind-Value="registerRequest.FirstName"
+                      For="@(() => registerRequest.FirstName)"
+                      Required="true"/>
+        <MudValidationMessage For="@(() => registerRequest.FirstName)"/>
+
+        <MudTextField T="string"
+                      Label="Nazwisko"
+                      @bind-Value="registerRequest.LastName"
+                      For="@(() => registerRequest.LastName)"
+                      Required="true"/>
+        <MudValidationMessage For="@(() => registerRequest.LastName)"/>
+        
+        <MudTextField T="string"
                       Label="Email"
                       @bind-Value="registerRequest.Email"
                       For="@(() => registerRequest.Email)"

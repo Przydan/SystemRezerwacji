@@ -1,31 +1,92 @@
-@namespace WebApp.Layout
+@page "/my-reservations"
+@attribute [Authorize]
+
+@using System.Security.Claims
+@using Application.Interfaces.Booking
+@using Shared.DTOs.Booking
+@using WebApp.Components
 
 @inject IBookingService BookingService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
 
-<h3>Moje rezerwacje</h3>
+<h3>Moje Rezerwacje</h3>
 
-@if (bookings is null)
+@if (isLoading)
 {
-    <p><em>Ładowanie…</em></p>
+    <MudText>Ładowanie...</MudText>
 }
-else if (!bookings.Any())
+else if (!string.IsNullOrEmpty(errorMessage))
 {
-    <p>Nie masz jeszcze żadnych rezerwacji.</p>
+    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+}
+else if (bookings is not null && bookings.Any())
+{
+    <MudSimpleTable Hover="true" FixedHeader="true">
+        <thead>
+            <tr>
+                <th>Zasób</th>
+                <th>Od</th>
+                <th>Do</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var booking in bookings)
+            {
+                <tr>
+                    <td>@booking.ResourceName</td>
+                    <td>@booking.StartTime.ToString("g")</td>
+                    <td>@booking.EndTime.ToString("g")</td>
+                    <td>@booking.Status</td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
 }
 else
 {
-    @foreach (var b in bookings)
-    {
-        <BookingListItem Item="b"/>
-    }
+    <MudText>Nie masz jeszcze żadnych rezerwacji.</MudText>
 }
 
 @code {
     private List<BookingDto>? bookings;
+    private bool isLoading = true;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        bookings = await BookingService.GetMyBookingsAsync();
-    }
+        isLoading = true;
+        errorMessage = null;
+        
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
 
+            if (user.Identity is { IsAuthenticated: true })
+            {
+                var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (Guid.TryParse(userIdString, out var userId))
+                {
+                    bookings = await BookingService.GetUserBookingsAsync(userId);
+                }
+                else
+                {
+                    errorMessage = "Nie udało się zidentyfikować użytkownika. Token jest nieprawidłowy.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Wystąpił błąd podczas ładowania rezerwacji.";
+            Snackbar.Add(errorMessage, Severity.Error);
+            Console.WriteLine($"Błąd: {ex}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
 }

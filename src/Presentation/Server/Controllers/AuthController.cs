@@ -18,7 +18,7 @@ namespace Server.Controllers
         [HttpPost("register")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerDto)
         {
             if (!ModelState.IsValid)
             {
@@ -41,7 +41,7 @@ namespace Server.Controllers
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
         {
             if (!ModelState.IsValid)
             {

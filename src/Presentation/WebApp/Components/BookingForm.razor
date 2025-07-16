@@ -1,58 +1,83 @@
-@namespace WebApp.Components
+@using Shared.DTOs.Booking
 
+<MudCard>
+    <MudForm @ref="@form" @bind-IsValid="isValid">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker Label="Data rozpoczęcia" @bind-Date="startDate" For="@(() => startDate)" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker Label="Godzina rozpoczęcia" @bind-Time="startTime" For="@(() => startTime)" Required="true" />
+                </MudItem>
 
-<EditForm Model="Model" OnValidSubmit="Submit">
-  <DataAnnotationsValidator/>
-  <MudPaper Class="pa-4">
-    <MudStack Spacing="3">
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker Label="Data zakończenia" @bind-Date="endDate" For="@(() => endDate)" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker Label="Godzina zakończenia" @bind-Time="endTime" For="@(() => endTime)" Required="true" />
+                </MudItem>
 
-      <!-- Wybór zasobu -->
-      <MudSelect T="Guid"
-                 Label="Zasób"
-                 @bind-Value="Model.ResourceId"
-                 Required="true">
-        @foreach (var r in Resources)
-        {
-          <MudSelectItem Value="@r.Id">@r.Name</MudSelectItem>
-        }
-      </MudSelect>
-
-      <!-- Data i godzina rozpoczęcia -->
-      <MudDatePicker T="DateTime"
-                     Label="Start rezerwacji"
-                     @bind-Value="Model.StartTime"
-                     Picker="Picker.DateTime"
-                     Required="true"/>
-
-      <!-- Data i godzina zakończenia -->
-      <MudDatePicker T="DateTime"
-                     Label="Koniec rezerwacji"
-                     @bind-Value="Model.EndTime"
-                     Picker="Picker.DateTime"
-                     Required="true"/>
-
-      <!-- Notatki -->
-      <MudTextField T="string"
-                    Label="Notatki"
-                    @bind-Value="Model.Notes"
-                    Lines="3"/>
-
-      <MudButton Color="Color.Primary"
-                 Variant="Variant.Filled"
-                 ButtonType="ButtonType.Submit">
-        Zapisz
-      </MudButton>
-
-    </MudStack>
-  </MudPaper>
-</EditForm>
+                <MudItem xs="12">
+                    <MudTextField Label="Notatki" @bind-Value="Model.Notes" For="@(() => Model.Notes)" Lines="3" />
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Submit" Disabled="@(!isValid)">@ButtonText</MudButton>
+        </MudCardActions>
+    </MudForm>
+</MudCard>
 
 @code {
-  [Parameter] public BookingRequestDto Model { get; set; } = new();
-  [Parameter] public IEnumerable<ResourceDto> Resources { get; set; } = Array.Empty<ResourceDto>();
-  [Parameter] public EventCallback<BookingRequestDto> OnValidSubmit { get; set; }
+    [Parameter] public BookingRequestDto Model { get; set; } = new();
+    [Parameter] public EventCallback<BookingRequestDto> OnValidSubmit { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Zapisz";
 
-  private async Task Submit() =>
-    await OnValidSubmit.InvokeAsync(Model);
+    private MudForm form = null!;
+    private bool isValid;
 
+    // Oddzielne pola dla daty i czasu do bindowania
+    private DateTime? startDate;
+    private TimeSpan? startTime;
+    private DateTime? endDate;
+    private TimeSpan? endTime;
+
+    protected override void OnParametersSet()
+    {
+        // Wypełniamy pola pomocnicze, gdy komponent otrzymuje model (np. przy edycji)
+        if (Model.StartTime.HasValue)
+        {
+            startDate = Model.StartTime.Value.Date;
+            startTime = Model.StartTime.Value.TimeOfDay;
+        }
+        if (Model.EndTime.HasValue)
+        {
+            endDate = Model.EndTime.Value.Date;
+            endTime = Model.EndTime.Value.TimeOfDay;
+        }
+    }
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            return;
+        }
+
+        // Łączymy daty i czasy w jedną całość i aktualizujemy główny Model
+        if (startDate.HasValue && startTime.HasValue)
+        {
+            Model.StartTime = startDate.Value.Date + startTime.Value;
+        }
+
+        if (endDate.HasValue && endTime.HasValue)
+        {
+            Model.EndTime = endDate.Value.Date + endTime.Value;
+        }
+
+        // Wywołujemy zdarzenie, przekazując uzupełniony model
+        await OnValidSubmit.InvokeAsync(Model);
+    }
 }

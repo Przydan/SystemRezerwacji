@@ -1,12 +1,6 @@
-// Infrastructure/Persistence/Repositories/ResourceTypeRepository.cs
-
 using Microsoft.EntityFrameworkCore;
 using Application.Interfaces.Persistence;
 using Domain.Entities;
-// Upewnij się, że jest poprawna ścieżka
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Infrastructure.Persistence.DbContext;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -39,7 +33,17 @@ public class ResourceTypeRepository : IResourceTypeRepository
 
     public async Task UpdateAsync(ResourceType resourceType)
     {
-        _dbContext.Entry(resourceType).State = EntityState.Modified;
+        var existingResourceType = await _dbContext.ResourceTypes.FindAsync(resourceType.Id);
+        
+        if (existingResourceType == null)
+        {
+            return;
+        }
+        
+        existingResourceType.Name = resourceType.Name;
+        existingResourceType.Description = resourceType.Description;
+        existingResourceType.IconCssClass = resourceType.IconCssClass;
+        
         await _dbContext.SaveChangesAsync();
     }
 

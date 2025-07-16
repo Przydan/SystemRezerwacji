@@ -1,45 +1,41 @@
-﻿@page "/create-booking"
-@inject IResourceService ResourceService
+﻿@* Zmieniamy ścieżkę, aby akceptowała parametr *@
+@page "/bookings/new/{ResourceId:guid}"
+@attribute [Authorize]
+@using Application.Interfaces.Booking
+@using Shared.DTOs.Booking
+@using WebApp.Components // Za chwilę stworzymy komponent BookingForm
 @inject IBookingService BookingService
-@inject NavigationManager Nav
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
-<h3>Nowa rezerwacja</h3>
+<PageTitle>Nowa rezerwacja</PageTitle>
+<MudText Typo="Typo.h4" GutterBottom="true">Tworzenie nowej rezerwacji</MudText>
 
-@if (resources is null)
-{
-    <p><em>Ładowanie zasobów…</em></p>
-}
-else
-{
-    <BookingForm
-        Model="model"
-        Resources="resources"
-        OnValidSubmit="HandleCreate"/>
-}
+<BookingForm Model="newBooking" OnValidSubmit="HandleCreateBooking" ButtonText="Utwórz Rezerwację" />
 
 @code {
-    private BookingRequestDto model = new();
-    private List<ResourceDto>? resources;
+    [Parameter]
+    public Guid ResourceId { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private BookingRequestDto newBooking = new();
+
+    protected override void OnInitialized()
     {
-        resources = await ResourceService.GetResourcesAsync();
+        newBooking.ResourceId = this.ResourceId;
     }
 
-    private async Task HandleCreate(BookingRequestDto dto)
+    private async Task HandleCreateBooking()
     {
-        try
+        var result = await BookingService.CreateBookingAsync(newBooking); 
+        
+        if (result != null)
         {
-            await BookingService.CreateBookingAsync(dto);
-            Nav.NavigateTo("/my-reservations");
+            Snackbar.Add("Rezerwacja została utworzona!", Severity.Success);
+            NavigationManager.NavigateTo("/my-reservations");
         }
-        catch (Exception ex)
+        else
         {
-            // Tutaj można dodać obsługę błędów, np.:
-            // ErrorMessage = ex.Message;
-            // StateHasChanged();
-            Console.WriteLine($"Błąd podczas tworzenia rezerwacji: {ex.Message}");
+            Snackbar.Add("Nie udało się utworzyć rezerwacji (konflikt terminów lub inny błąd).", Severity.Error);
         }
     }
-
 }

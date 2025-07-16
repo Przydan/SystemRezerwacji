@@ -2,18 +2,12 @@ namespace Shared.DTOs.Resource
 {
     public class ResourceDto
     {
-        // Konstruktor domyślny
         public ResourceDto()
         {
-            // Domyślne wartości są już ustawione przy deklaracji właściwości
         }
-
-        // Konstruktor kopiujący
+        
         public ResourceDto(ResourceDto resource)
         {
-            if (resource == null)
-                return;
-
             Id = resource.Id;
             Name = resource.Name;
             Description = resource.Description;
@@ -25,7 +19,7 @@ namespace Shared.DTOs.Resource
         }
 
         public Guid Id { get; set; }
-        public string Name { get; set; } = "";
+        public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = "";
         public string Location { get; set; } = "";
         public int Capacity { get; set; }
