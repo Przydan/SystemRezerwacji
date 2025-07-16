@@ -44,6 +44,11 @@ public class BookingService : IBookingService
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<bool> AdminCancelBookingAsync(Guid bookingId)
+    {
+        var response = await _httpClient.DeleteAsync($"api/bookings/admin/{bookingId}");
+        return response.IsSuccessStatusCode;    }
+
     public async Task<bool> UpdateBookingAsync(Guid bookingId, UpdateBookingRequestDto request, Guid userId)
     {
         // userId nie jest potrzebne, serwer zweryfikuje je na podstawie tokenu.
