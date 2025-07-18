@@ -1,11 +1,11 @@
 @page "/admin/user-bookings"
-@using Application.Interfaces.Booking
 @using Application.Interfaces.User
 @using Shared.DTOs.User
 @using Shared.DTOs.Booking
+@using WebApp.Interfaces
 @attribute [Authorize(Roles = "Administrator")]
 @inject IUserService UserService
-@inject IBookingService BookingService
+@inject IWebAppBookingService BookingService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
