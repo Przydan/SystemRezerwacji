@@ -204,7 +204,7 @@ public class Program
 
             // Wywołaj wszystkie seedery, przekazując dostawcę usług
             await IdentityDataSeeder.SeedRolesAndAdminUserAsync(services);
-            await ResourceTypeSeeder.SeedResourceTypeAsync(services);
+            //await ResourceTypeSeeder.SeedResourceTypeAsync(services);
             //await ResourceSeeder.SeedAsync(services); 
         }
         catch (Exception ex)
