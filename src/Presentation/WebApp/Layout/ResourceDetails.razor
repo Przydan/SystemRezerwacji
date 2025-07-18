@@ -5,9 +5,10 @@
 @using Shared.DTOs.Resource
 @using Shared.DTOs.Booking
 @using WebApp.Components
+@using WebApp.Interfaces
 @using IResourceService = Application.Interfaces.Persistence.IResourceService
 @inject IResourceService ResourceService
-@inject IBookingService BookingService
+@inject IWebAppBookingService BookingService
 @inject AuthenticationStateProvider AuthStateProvider
 
 <h3>Szczegóły zasobu</h3>
@@ -71,7 +72,7 @@ else
                 if (Guid.TryParse(userIdString, out var userId))
                 {
                     // 2. Pobierz wszystkie rezerwacje tego użytkownika
-                    var allMyBookings = await BookingService.GetUserBookingsAsync(userId);
+                    var allMyBookings = await BookingService.GetMyBookingsAsync();
                     
                     // UWAGA: To jest tymczasowe obejście problemu w projekcie.
                     // Poprawnie powinno się filtrować po ResourceId, ale brakuje go w BookingDto.
