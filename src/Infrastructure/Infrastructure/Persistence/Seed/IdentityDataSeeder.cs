@@ -36,7 +36,7 @@ public class IdentityDataSeeder
             }
             
             var adminEmail = "admin@x.pl"; 
-            var adminPassword = "PassT1234!@#$"; 
+            var adminPassword = "Pass1234!@#$"; 
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
