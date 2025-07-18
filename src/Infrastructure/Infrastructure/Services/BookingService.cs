@@ -202,5 +202,22 @@ namespace Infrastructure.Services
         {
             return Task.FromResult<List<BookingDto>>(null);
         }
+
+        public async Task<List<BookingDto>> GetBookingsByResourceIdAsync(Guid resourceId)
+        {
+            return await _context.Bookings
+                .Where(b => b.ResourceId == resourceId && b.EndTime >= DateTime.UtcNow) // Pokaż tylko przyszłe i aktywne rezerwacje
+                .Select(b => new BookingDto
+                {
+                    Id = b.Id,
+                    ResourceId = b.ResourceId,
+                    UserId = b.UserId,
+                    StartTime = b.StartTime,
+                    EndTime = b.EndTime,
+                    Notes = b.Notes
+                })
+                .OrderBy(b => b.StartTime)
+                .ToListAsync();
+        }
     }
 }

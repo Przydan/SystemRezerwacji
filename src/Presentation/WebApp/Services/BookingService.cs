@@ -54,4 +54,18 @@ public class BookingService : IWebAppBookingService
     {
         return await _httpClient.GetFromJsonAsync<List<BookingDto>>($"api/bookings/user/{userId}");
     }
+    
+    public async Task<List<BookingDto>> GetBookingsForResourceAsync(Guid resourceId)
+    {
+        try
+        {
+            var bookings = await _httpClient.GetFromJsonAsync<List<BookingDto>>($"api/bookings/resource/{resourceId}");
+            return bookings ?? new List<BookingDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Błąd podczas pobierania rezerwacji dla zasobu: {ex.Message}");
+            return new List<BookingDto>(); // Zwróć pustą listę w razie błędu
+        }
+    }
 }
