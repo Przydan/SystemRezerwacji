@@ -1,10 +1,8 @@
-﻿@* Zmieniamy ścieżkę, aby akceptowała parametr *@
-@page "/bookings/new/{ResourceId:guid}"
+﻿@page "/bookings/new/{ResourceId:guid}"
 @attribute [Authorize]
-@using Application.Interfaces.Booking
 @using Shared.DTOs.Booking
-@using WebApp.Components // Za chwilę stworzymy komponent BookingForm
-@inject IBookingService BookingService
+@using WebApp.Interfaces
+@inject IWebAppBookingService BookingService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 

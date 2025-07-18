@@ -1,4 +1,3 @@
-using Application.Interfaces.Booking;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
@@ -6,9 +5,9 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using WebApp.Auth;
 using WebApp.Services;
-
 using Application.Interfaces.Persistence;
 using Application.Interfaces.User;
+using WebApp.Interfaces;
 
 namespace WebApp
 {
@@ -40,10 +39,10 @@ namespace WebApp
             builder.Services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<AuthService>());
             builder.Services.AddScoped<IAuthService>(provider => provider.GetRequiredService<AuthService>());
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<IWebAppBookingService, BookingService>();
             builder.Services.AddScoped<IResourceService, ResourceService>();
             builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
-            builder.Services.AddScoped<IBookingService, BookingService>();
+            
 
             await builder.Build().RunAsync();
         }

@@ -100,11 +100,6 @@ namespace Infrastructure.Services
             };
         }
 
-        public Task<BookingDto?> CreateBookingAsync(BookingRequestDto bookingRequest)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<List<BookingDto>> GetUserBookingsAsync(Guid userId)
         {
             var bookings = await _context.Bookings
