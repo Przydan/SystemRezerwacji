@@ -100,11 +100,6 @@ namespace Infrastructure.Services
             };
         }
 
-        public Task<BookingDto?> CreateBookingAsync(BookingRequestDto bookingRequest)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<List<BookingDto>> GetUserBookingsAsync(Guid userId)
         {
             var bookings = await _context.Bookings
@@ -206,6 +201,23 @@ namespace Infrastructure.Services
         public Task<List<BookingDto>?> GetBookingsForUserAsync(Guid userId)
         {
             return Task.FromResult<List<BookingDto>>(null);
+        }
+
+        public async Task<List<BookingDto>> GetBookingsByResourceIdAsync(Guid resourceId)
+        {
+            return await _context.Bookings
+                .Where(b => b.ResourceId == resourceId && b.EndTime >= DateTime.UtcNow) // Pokaż tylko przyszłe i aktywne rezerwacje
+                .Select(b => new BookingDto
+                {
+                    Id = b.Id,
+                    ResourceId = b.ResourceId,
+                    UserId = b.UserId,
+                    StartTime = b.StartTime,
+                    EndTime = b.EndTime,
+                    Notes = b.Notes
+                })
+                .OrderBy(b => b.StartTime)
+                .ToListAsync();
         }
     }
 }

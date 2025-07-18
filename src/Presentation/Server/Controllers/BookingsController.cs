@@ -167,6 +167,15 @@ namespace Server.Controllers
             var bookings = await _bookingService.GetUserBookingsAsync(userId);
             return Ok(bookings);
         }
+        
+        [HttpGet("resource/{resourceId:guid}")]
+        [AllowAnonymous] // Pozwalamy każdemu zobaczyć zajętość zasobu
+        public async Task<IActionResult> GetBookingsForResource(Guid resourceId)
+        {
+            // W przyszłości można dodać filtrowanie po datach, np. z query string
+            var bookings = await _bookingService.GetBookingsByResourceIdAsync(resourceId);
+            return Ok(bookings);
+        }
 
         private Guid GetUserIdFromToken()
         {
