@@ -41,7 +41,10 @@ System umożliwia rejestrację oraz logowanie użytkowników, przegląd dostępn
 Klonowanie repozytorium git clone https://github.com/Przydan/SystemRezerwacji.git
 Otwórz projekt w Visual Studio 2022
 Przywróć pakiety NuGet (Visual Studio robi to automatycznie przy pierwszym uruchomieniu)
-Utwórz bazę danych: projekt korzysta z LocalDB. Po pierwszym uruchomieniu baza utworzy się automatycznie dzięki migracjom EF Core.
+Utwórz bazę danych: projekt korzysta z LocalDB. 
+Wykonaj migrację i update bazy za pomocą tych dwóch komend jedna po drugiej:
+dotnet ef migrations add --project src/Infrastructure/Infrastructure/Infrastructure.csproj --startup-project src/Presentation/Server/Server.csproj --context Infrastructure.Persistence.DbContext.SystemRezerwacjiDbContext --configuration Debug init --output-dir Migrations
+dotnet ef database update --project src/Infrastructure/Infrastructure/Infrastructure.csproj --startup-project src/Presentation/Server/Server.csproj --context Infrastructure.Persistence.DbContext.SystemRezerwacjiDbContext --configuration Debug init
 Uruchom aplikację (F5 lub "Start"). Aplikacja zostanie otwarta w przeglądarce na domyślnym porcie.
 Rejestracja i logowanie: pierwszy użytkownik rejestruje się przez formularz. Po zalogowaniu możliwe jest korzystanie z systemu rezerwacji.
 
