@@ -39,13 +39,26 @@ System umożliwia rejestrację oraz logowanie użytkowników, przegląd dostępn
 6. Instrukcja uruchomienia:
    
 Klonowanie repozytorium git clone https://github.com/Przydan/SystemRezerwacji.git
-Otwórz projekt w Visual Studio 2022
-Przywróć pakiety NuGet (Visual Studio robi to automatycznie przy pierwszym uruchomieniu)
-Utwórz bazę danych: projekt korzysta z LocalDB. 
-Wykonaj migrację i update bazy za pomocą tych dwóch komend jedna po drugiej:
+Po skopiowaniu projektu do VS22 proszę wykonać migrację i update bazy w terminalu używając tych dwóch komend jedna po drugiej:
+
 dotnet ef migrations add --project src/Infrastructure/Infrastructure/Infrastructure.csproj --startup-project src/Presentation/Server/Server.csproj --context Infrastructure.Persistence.DbContext.SystemRezerwacjiDbContext --configuration Debug init --output-dir Migrations
+
 dotnet ef database update --project src/Infrastructure/Infrastructure/Infrastructure.csproj --startup-project src/Presentation/Server/Server.csproj --context Infrastructure.Persistence.DbContext.SystemRezerwacjiDbContext --configuration Debug init
-Uruchom aplikację (F5 lub "Start"). Aplikacja zostanie otwarta w przeglądarce na domyślnym porcie.
+
+Po migracji bazy został ostatni krok:
+
+Mamy dwie aplikacje do uruchomienia. Nie jest skonfigurowane w visual studio jednoczesne uruchamianie w jednej instancji vs22 trzeba uruchomić drugą instancję vs22 i uruchomić drugą aplikację. Uruchamiamy najpierw serwer http później webapp http
+
+Cel: Uruchomienie dwóch powiązanych aplikacji (serwera i aplikacji webowej) w sytuacji, gdy solucja Visual Studio nie jest skonfigurowana do jednoczesnego startu wielu projektów. Procedura:
+Uruchomienie Serwera:
+Otwórz plik solucji (.sln) w pierwszej instancji Visual Studio 2022.
+W oknie Solution Explorer ustaw projekt serwera HTTP jako projekt startowy (kliknij prawym przyciskiem myszy na projekcie -> Set as Startup Project).
+Uruchom projekt, naciskając F5 lub przycisk Start.
+Uruchomienie Aplikacji Webowej:
+Uruchom drugą, niezależną instancję Visual Studio 2022.
+W nowym oknie otwórz ten sam plik solucji (.sln).
+W oknie Solution Explorer ustaw projekt aplikacji webowej (WebApp) jako projekt startowy.
+Uruchom projekt, naciskając F5 lub przycisk Start.
 Rejestracja i logowanie: pierwszy użytkownik rejestruje się przez formularz. Po zalogowaniu możliwe jest korzystanie z systemu rezerwacji.
 
 7. Uwagi końcowe
