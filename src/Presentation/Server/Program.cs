@@ -1,7 +1,5 @@
-using System.Text;
 using Application.Interfaces.Booking;
 using Application.Interfaces.Persistence;
-using Application.Interfaces.User;
 using Application.Services;
 using Domain.Entities;
 using Infrastructure.Persistence.DbContext;
@@ -11,8 +9,6 @@ using Infrastructure.Services;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
-using Microsoft.OpenApi.Models;
 
 namespace Server;
 
@@ -44,36 +40,7 @@ public class Program
     private static void ConfigureBasicServices(WebApplicationBuilder builder)
     {
         builder.Services.AddControllersWithViews();
-        builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile).Assembly);
-        builder.Services.AddSwaggerGen(options =>
-        {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "SystemRezerwacji API", Version = "v1" });
-            
-            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                In = ParameterLocation.Header,
-                Description = "Wprowadź token JWT poprzedzony słowem 'Bearer ' (np. 'Bearer eyJhbGci...')",
-                Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
-            });
-            
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    new string[] {}
-                }
-            });
-        });
     }
 
     private static void ConfigureDatabaseAndIdentity(WebApplicationBuilder builder)
@@ -115,7 +82,6 @@ public class Program
 
         builder.Services.ConfigureApplicationCookie(options =>
         {
-            // Opcjonalne: dostosowanie ustawień ciasteczka
             options.LoginPath = "/Account/Login";
             options.AccessDeniedPath = "/Account/AccessDenied";
             options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
@@ -124,25 +90,19 @@ public class Program
 
     private static void ConfigureApplicationServices(WebApplicationBuilder builder)
     {
-        builder.Services.AddScoped<IUserService, UserService>();
-        
         builder.Services.AddScoped<IResourceTypeRepository, ResourceTypeRepository>();
         builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
         
-       // Services
-builder.Services.AddScoped<IResourceService, ResourceService>();
-builder.Services.AddScoped<IBookingService, BookingService>();
-builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
-builder.Services.AddScoped<Application.Interfaces.Infrastructure.IEmailService, Infrastructure.Services.FileEmailService>();
+        builder.Services.AddScoped<IResourceService, ResourceService>();
+        builder.Services.AddScoped<IBookingService, BookingService>();
+        builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
+        builder.Services.AddScoped<Application.Interfaces.Infrastructure.IEmailService, Infrastructure.Services.FileEmailService>();
     }
 
     private static async Task ConfigureApplication(WebApplication app)
     {
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-            await SeedDevelopmentData(app);
             await SeedDevelopmentData(app);
         }
         else
@@ -168,6 +128,10 @@ builder.Services.AddScoped<Application.Interfaces.Infrastructure.IEmailService, 
     {
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
+        var configuration = services.GetRequiredService<IConfiguration>();
+
+        // Read SeedTestData flag, default to true if not set
+        bool seedTestData = configuration.GetValue<bool>("SeedTestData", true);
 
         try
         {
@@ -175,13 +139,21 @@ builder.Services.AddScoped<Application.Interfaces.Infrastructure.IEmailService, 
             await context.Database.MigrateAsync();
 
             // Wywołaj wszystkie seedery, przekazując dostawcę usług
-            await IdentityDataSeeder.SeedRolesAndAdminUserAsync(services);
+            // Identity (Roles & Admin) always runs, Test Users controlled by flag
+            await IdentityDataSeeder.SeedRolesAndAdminUserAsync(services, seedTestUsers: seedTestData);
+            
+            // ResourceTypes are essential configuration, always run
             await ResourceTypeSeeder.SeedResourceTypeAsync(services);
-            await Infrastructure.Persistence.Seed.ResourceSeeder.SeedResourcesAsync(context);
-        
-            // Seed Bookings
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            await Infrastructure.Persistence.Seed.BookingSeeder.SeedBookingsAsync(context, logger);
+
+            if (seedTestData)
+            {
+                // Resources and Bookings are test data
+                await Infrastructure.Persistence.Seed.ResourceSeeder.SeedResourcesAsync(context);
+            
+                // Seed Bookings
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                await Infrastructure.Persistence.Seed.BookingSeeder.SeedBookingsAsync(context, logger);
+            }
         
         }
         catch (Exception ex)

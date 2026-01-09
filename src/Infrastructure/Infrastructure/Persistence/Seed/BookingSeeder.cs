@@ -28,14 +28,14 @@ public class BookingSeeder
             var random = new Random();
 
             // Helpers to find specific users/resources
-            var qaUsers = users.Where(u => u.FirstName == "Piotr" || u.LastName.Contains("QA")).ToList();
-            var devUsers = users.Where(u => u.FirstName == "Jan" || u.FirstName == "Tomasz" || u.LastName.Contains("Dev")).ToList();
+            var qaUsers = users.Where(u => u.FirstName == "Piotr" || (u.LastName?.Contains("QA") == true)).ToList();
+            var devUsers = users.Where(u => u.FirstName == "Jan" || u.FirstName == "Tomasz" || (u.LastName?.Contains("Dev") == true)).ToList();
             var pmUser = users.FirstOrDefault(u => u.FirstName == "Anna"); // PM
             
             var matrixRoom = resources.FirstOrDefault(r => r.Name.Contains("Matrix"));
             var zionRoom = resources.FirstOrDefault(r => r.Name.Contains("Zion"));
-            var testDevices = resources.Where(r => r.ResourceType.Name == "Sprzęt").ToList();
-            var desks = resources.Where(r => r.ResourceType.Name.Contains("Biurko")).ToList();
+            var testDevices = resources.Where(r => r.ResourceType?.Name == "Sprzęt").ToList();
+            var desks = resources.Where(r => r.ResourceType?.Name?.Contains("Biurko") == true).ToList();
 
             // Scenario 1: Daily Standups (Matrix Room, 09:30 - 10:00, Mon-Fri)
             if (matrixRoom != null && pmUser != null)

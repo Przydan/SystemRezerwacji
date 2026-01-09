@@ -6,12 +6,13 @@ namespace Infrastructure.Services
     public class FileEmailService : IEmailService
     {
         private readonly ILogger<FileEmailService> _logger;
-        // Path to store emails - utilizing the artifacts brain directory as requested
-        private readonly string _emailDirectory = "/home/przydan/.gemini/antigravity/brain/emails";
+        private readonly string _emailDirectory;
 
         public FileEmailService(ILogger<FileEmailService> logger)
         {
             _logger = logger;
+            // Use temp directory for cross-platform compatibility
+            _emailDirectory = Path.Combine(Path.GetTempPath(), "SystemRezerwacji", "emails");
             if (!Directory.Exists(_emailDirectory))
             {
                 Directory.CreateDirectory(_emailDirectory);
@@ -26,7 +27,7 @@ namespace Infrastructure.Services
             var emailContent = $"To: {to}\nSubject: {subject}\nDate: {DateTime.Now}\n\n{body}";
 
             await File.WriteAllTextAsync(filePath, emailContent);
-            _logger.LogInformation($"Email sent to {to}, saved at {filePath}");
+            _logger.LogInformation("Email sent to {To}, saved at {FilePath}", to, filePath);
         }
     }
 }

@@ -42,7 +42,7 @@
                 </td>
                 <td>
                     <div class="d-flex gap-2">
-                         @if (User.Identity.Name != user.UserName) // Prevent self-lockout/demotion
+                         @if (User.Identity?.Name != user.UserName) // Prevent self-lockout/demotion
                          {
                             <form asp-action="ToggleAdmin" method="post">
                                 <input type="hidden" name="userId" value="@user.Id" />

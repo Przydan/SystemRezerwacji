@@ -220,11 +220,6 @@ namespace Infrastructure.Services
                 Notes = booking.Notes
             };
         }
-        
-        public Task<List<BookingDto>?> GetBookingsForUserAsync(Guid userId)
-        {
-            return Task.FromResult<List<BookingDto>?>(null);
-        }
 
         public async Task<List<BookingDto>> GetBookingsByResourceIdAsync(Guid resourceId)
         {

@@ -12,7 +12,6 @@ public interface IBookingService
     Task<bool> AdminUpdateBookingAsync(Guid bookingId, UpdateBookingRequestDto request);
     Task<BookingDto?> GetBookingByIdAsync(Guid bookingId, Guid userId);
     Task<BookingDto?> GetBookingByIdForAdminAsync(Guid bookingId);
-    Task<List<BookingDto>?> GetBookingsForUserAsync(Guid userId);
     Task<List<BookingDto>> GetBookingsByResourceIdAsync(Guid resourceId);
     Task<List<BookingDto>> GetAllBookingsAsync();
 
