@@ -24,7 +24,7 @@
 ### Metoda 1: Jedna komenda (zalecana)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Przydan/SystemRezerwacji/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Przydan/SystemRezerwacji/refs/heads/master/install.sh | bash
 ```
 
 Skrypt automatycznie:
