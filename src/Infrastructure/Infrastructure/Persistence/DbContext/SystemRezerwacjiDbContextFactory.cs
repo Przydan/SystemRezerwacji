@@ -15,9 +15,9 @@ namespace Infrastructure.Persistence.DbContext
             // aby zachować spójność, ale pamiętaj, że to jest tylko dla narzędzi EF Core.
             // Plik bazy danych zostanie utworzony względem katalogu, z którego uruchamiasz `dotnet ef`.
             // Jeśli uruchamiasz z głównego folderu solucji, plik powstanie tam.
-            var connectionString = "Data Source=systemrezerwacji_design_time.db";
+            var connectionString = "Server=localhost,1433;Database=SystemRezerwacjiDb;User Id=sa;Password=YourStrong(!)Password;TrustServerCertificate=True";
 
-            optionsBuilder.UseSqlite(connectionString);
+            optionsBuilder.UseSqlServer(connectionString);
 
             return new SystemRezerwacjiDbContext(optionsBuilder.Options);
         }

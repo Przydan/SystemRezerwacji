@@ -1,0 +1,39 @@
+@model IEnumerable<Shared.DTOs.Resource.ResourceTypeDto>
+@{
+    ViewData["Title"] = "Typy Zasobów";
+}
+
+<h1>Typy Zasobów</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Utwórz Nowy</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nazwa</th>
+            <th>Opis</th>
+            <th>Ikona</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Description)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IconCssClass)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edytuj</a>
+                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Usuń</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

@@ -1,21 +1,14 @@
-using System.Text;
 using Application.Interfaces.Booking;
-using Application.Interfaces.Identity;
 using Application.Interfaces.Persistence;
-using Application.Interfaces.User;
 using Application.Services;
 using Domain.Entities;
-using Infrastructure.Authentication;
-using Infrastructure.Identity;
 using Infrastructure.Persistence.DbContext;
 using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence.Seed;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 
 namespace Server;
 
@@ -38,55 +31,16 @@ public class Program
         ConfigureBasicServices(builder);
         ConfigureDatabaseAndIdentity(builder);
         ConfigureAuthenticationAndAuthorization(builder);
-        ConfigureCorsPolicy(builder);
+
         ConfigureApplicationServices(builder);
     }
 
-    private static void ConfigureCorsPolicy(WebApplicationBuilder builder)
-    {
-        builder.Services.AddCors(options =>
-        {
-            options.AddPolicy("AllowBlazorApp", policyBuilder =>
-                policyBuilder
-                    .WithOrigins(builder.Configuration["WebAppBaseUrl"] ?? "http://localhost:5214")
-                    .AllowAnyHeader()
-                    .AllowAnyMethod());
-        });
-    }
+
 
     private static void ConfigureBasicServices(WebApplicationBuilder builder)
     {
-        builder.Services.AddControllers();
-        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddControllersWithViews();
         builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile).Assembly);
-        builder.Services.AddSwaggerGen(options =>
-        {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "SystemRezerwacji API", Version = "v1" });
-            
-            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                In = ParameterLocation.Header,
-                Description = "Wprowadź token JWT poprzedzony słowem 'Bearer ' (np. 'Bearer eyJhbGci...')",
-                Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
-            });
-            
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    new string[] {}
-                }
-            });
-        });
     }
 
     private static void ConfigureDatabaseAndIdentity(WebApplicationBuilder builder)
@@ -94,7 +48,7 @@ public class Program
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? $"Data Source={DefaultDbName}";
 
         builder.Services.AddDbContext<SystemRezerwacjiDbContext>(options =>
-            options.UseSqlite(connectionString));
+            options.UseSqlServer(connectionString));
 
         builder.Services.AddIdentity<User, IdentityRole<Guid>>(ConfigureIdentityOptions)
             .AddEntityFrameworkStores<SystemRezerwacjiDbContext>()
@@ -120,74 +74,52 @@ public class Program
 
     private static void ConfigureAuthenticationAndAuthorization(WebApplicationBuilder builder)
     {
-        var jwtSettingsSection = builder.Configuration.GetSection(JwtSettings.SectionName);
-        var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
-
-        if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key))
-        {
-            throw new InvalidOperationException("Konfiguracja JWT (JwtSettings) jest nieprawidłowa lub klucz (Key) jest pusty.");
-        }
-        
-        builder.Services.Configure<JwtSettings>(jwtSettingsSection);
-        
-        builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(options =>
-        {
-            options.SaveToken = true;
-            options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = jwtSettings.Issuer,
-                ValidAudience = jwtSettings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
-                ClockSkew = TimeSpan.FromSeconds(5)
-            };
-        });
-        
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy("RequireAdministratorRole", policy =>
                 policy.RequireRole("Administrator"));
         });
+
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
+            options.LoginPath = "/Account/Login";
+            options.AccessDeniedPath = "/Account/AccessDenied";
+            options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+        });
     }
 
     private static void ConfigureApplicationServices(WebApplicationBuilder builder)
     {
-        builder.Services.AddScoped<IAuthService, AuthService>();
-        builder.Services.AddScoped<IUserService, UserService>();
-        
         builder.Services.AddScoped<IResourceTypeRepository, ResourceTypeRepository>();
         builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
         
-        builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
         builder.Services.AddScoped<IResourceService, ResourceService>();
-        
         builder.Services.AddScoped<IBookingService, BookingService>();
-
+        builder.Services.AddScoped<IResourceTypeService, ResourceTypeService>();
+        builder.Services.AddScoped<Application.Interfaces.Infrastructure.IEmailService, Infrastructure.Services.FileEmailService>();
     }
 
     private static async Task ConfigureApplication(WebApplication app)
     {
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
             await SeedDevelopmentData(app);
+        }
+        else
+        {
+            app.UseExceptionHandler("/Home/Error");
+            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+            app.UseHsts();
         }
 
         app.UseHttpsRedirection();
-        app.UseCors("AllowBlazorApp");
+        app.UseStaticFiles();
+        app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapControllers();
+        app.MapControllerRoute(
+            name: "default",
+            pattern: "{controller=Home}/{action=Index}/{id?}");
 
         await app.RunAsync();
     }
@@ -196,6 +128,10 @@ public class Program
     {
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
+        var configuration = services.GetRequiredService<IConfiguration>();
+
+        // Read SeedTestData flag, default to true if not set
+        bool seedTestData = configuration.GetValue<bool>("SeedTestData", true);
 
         try
         {
@@ -203,9 +139,22 @@ public class Program
             await context.Database.MigrateAsync();
 
             // Wywołaj wszystkie seedery, przekazując dostawcę usług
-            await IdentityDataSeeder.SeedRolesAndAdminUserAsync(services);
+            // Identity (Roles & Admin) always runs, Test Users controlled by flag
+            await IdentityDataSeeder.SeedRolesAndAdminUserAsync(services, seedTestUsers: seedTestData);
+            
+            // ResourceTypes are essential configuration, always run
             await ResourceTypeSeeder.SeedResourceTypeAsync(services);
-            //await ResourceSeeder.SeedAsync(services); 
+
+            if (seedTestData)
+            {
+                // Resources and Bookings are test data
+                await Infrastructure.Persistence.Seed.ResourceSeeder.SeedResourcesAsync(context);
+            
+                // Seed Bookings
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                await Infrastructure.Persistence.Seed.BookingSeeder.SeedBookingsAsync(context, logger);
+            }
+        
         }
         catch (Exception ex)
         {

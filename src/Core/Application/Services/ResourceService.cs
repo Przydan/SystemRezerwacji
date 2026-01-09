@@ -28,6 +28,13 @@ namespace Application.Services
             return _mapper.Map<List<ResourceDto>>(resources);
         }
 
+        public async Task<List<ResourceDto>> GetActiveResourcesAsync()
+        {
+            var resources = await _resourceRepository.GetAllAsync();
+            var activeResources = resources.Where(r => r.IsActive).ToList();
+            return _mapper.Map<List<ResourceDto>>(activeResources);
+        }
+
         public async Task<ResourceDto> CreateResourceAsync(CreateResourceRequestDto createDto)
         {
             var resource = _mapper.Map<Resource>(createDto);
@@ -52,7 +59,9 @@ namespace Application.Services
             var resource = await _resourceRepository.GetByIdAsync(id);
             if (resource == null) return false;
 
-            await _resourceRepository.DeleteAsync(id);
+            // Soft Delete: Set IsActive to false instead of deleting
+            resource.IsActive = false;
+            await _resourceRepository.UpdateAsync(resource);
             return true;
         }
     }

@@ -1,32 +1,91 @@
-using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Domain.Entities;
+using SystemRezerwacji.Server.ViewModels;
 
-namespace Server.Controllers;
-
-[Route("api/[controller]")]
-[ApiController]
-[Authorize(Roles = "Administrator")] // Zabezpieczenie - tylko dla admina
-public class UsersController : ControllerBase
+namespace SystemRezerwacji.Server.Controllers
 {
-    private readonly UserManager<User> _userManager;
-
-    public UsersController(UserManager<User> userManager)
+    [Authorize(Roles = "Administrator")]
+    public class UsersController : Controller
     {
-        _userManager = userManager;
-    }
+        private readonly UserManager<User> _userManager;
+        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
 
-    // Ten endpoint będzie odpowiadał na żądanie GET: /api/users
-    [HttpGet]
-    public async Task<IActionResult> GetUsers()
-    {
-        // Pobieramy z bazy listę użytkowników, wybierając tylko te pola, które są nam potrzebne
-        var users = await _userManager.Users
-            .Select(u => new { u.Id, u.Email, u.FirstName, u.LastName })
-            .ToListAsync();
-            
-        return Ok(users);
+        public UsersController(UserManager<User> userManager, RoleManager<IdentityRole<Guid>> roleManager)
+        {
+            _userManager = userManager;
+            _roleManager = roleManager;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var users = _userManager.Users.ToList();
+            var userViewModels = new List<UserViewModel>();
+
+            foreach (var user in users)
+            {
+                var viewModel = new UserViewModel
+                {
+                    Id = user.Id,
+                    Email = user.Email ?? "",
+                    UserName = user.UserName ?? "",
+                    IsLockedOut = await _userManager.IsLockedOutAsync(user)
+                };
+
+                viewModel.IsAdmin = await _userManager.IsInRoleAsync(user, "Administrator");
+                userViewModels.Add(viewModel);
+            }
+
+            return View(userViewModels);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleAdmin(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return NotFound();
+
+            if (await _userManager.IsInRoleAsync(user, "Administrator"))
+            {
+                await _userManager.RemoveFromRoleAsync(user, "Administrator");
+                TempData["SuccessMessage"] = $"Odebrano uprawnienia administratora użytkownikowi {user.UserName}.";
+            }
+            else
+            {
+                // Ensure role exists
+                if (!await _roleManager.RoleExistsAsync("Administrator"))
+                {
+                    await _roleManager.CreateAsync(new IdentityRole<Guid>("Administrator"));
+                }
+                
+                await _userManager.AddToRoleAsync(user, "Administrator");
+                TempData["SuccessMessage"] = $"Nadano uprawnienia administratora użytkownikowi {user.UserName}.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleLockout(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return NotFound();
+
+            if (await _userManager.IsLockedOutAsync(user))
+            {
+                await _userManager.SetLockoutEndDateAsync(user, null);
+                TempData["SuccessMessage"] = $"Odblokowano użytkownika {user.UserName}.";
+            }
+            else
+            {
+                await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+                TempData["SuccessMessage"] = $"Zablokowano użytkownika {user.UserName}.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

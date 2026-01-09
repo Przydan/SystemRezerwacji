@@ -5,89 +5,100 @@ using Shared.DTOs.Resource;
 
 namespace Server.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ResourceTypesController : ControllerBase
+    [Authorize(Roles = "Administrator")]
+    public class ResourceTypesController : Controller
     {
         private readonly IResourceTypeService _resourceTypeService;
+        private readonly IResourceService _resourceService;
 
-        public ResourceTypesController(IResourceTypeService resourceTypeService)
+        public ResourceTypesController(IResourceTypeService resourceTypeService, IResourceService resourceService)
         {
             _resourceTypeService = resourceTypeService;
+            _resourceService = resourceService;
         }
 
-        // GET: api/ResourceTypes
-        [HttpGet]
-        public async Task<ActionResult<List<ResourceTypeDto>>> GetResourceTypes()
+        // GET: /ResourceTypes
+        public async Task<IActionResult> Index()
         {
             var resourceTypes = await _resourceTypeService.GetAllResourceTypesAsync();
-            return Ok(resourceTypes);
+            return View(resourceTypes);
         }
 
-        // GET: api/ResourceTypes/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        [HttpGet("{id:guid}")] // Ograniczenie :guid
-        public async Task<ActionResult<ResourceTypeDto>> GetResourceType(Guid id)
+        // GET: /ResourceTypes/Create
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: /ResourceTypes/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateResourceTypeRequestDto createDto)
+        {
+            if (ModelState.IsValid)
+            {
+                await _resourceTypeService.CreateResourceTypeAsync(createDto);
+                return RedirectToAction(nameof(Index));
+            }
+            return View(createDto);
+        }
+
+        // GET: /ResourceTypes/Edit/{id}
+        public async Task<IActionResult> Edit(Guid id)
         {
             var resourceType = await _resourceTypeService.GetResourceTypeByIdAsync(id);
+            if (resourceType == null) return NotFound();
 
-            if (resourceType == null)
+            var updateDto = new UpdateResourceTypeRequestDto
             {
-                return NotFound();
-            }
-
-            return Ok(resourceType);
+                Id = resourceType.Id,
+                Name = resourceType.Name,
+                Description = resourceType.Description,
+                IconCssClass = resourceType.IconCssClass
+            };
+            return View(updateDto);
         }
 
-        // POST: api/ResourceTypes
+        // POST: /ResourceTypes/Edit/{id}
         [HttpPost]
-        [Authorize(Roles = "Administrator")]
-        public async Task<ActionResult<ResourceTypeDto>> PostResourceType(CreateResourceTypeRequestDto createDto)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Guid id, UpdateResourceTypeRequestDto updateDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (id != updateDto.Id) return BadRequest();
 
-            var createdResourceType = await _resourceTypeService.CreateResourceTypeAsync(createDto);
-            
-            // Upewnij się, że createdResourceType.Id jest Guid
-            return CreatedAtAction(nameof(GetResourceType), new { id = createdResourceType.Id }, createdResourceType);
+            if (ModelState.IsValid)
+            {
+                var success = await _resourceTypeService.UpdateResourceTypeAsync(id, updateDto);
+                if (!success) return NotFound();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(updateDto);
         }
 
-        // PUT: api/ResourceTypes/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        [HttpPut("{id:guid}")] // Ograniczenie :guid
-        [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> PutResourceType(Guid id, UpdateResourceTypeRequestDto updateDto)
+        // GET: /ResourceTypes/Delete/{id}
+        public async Task<IActionResult> Delete(Guid id)
         {
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var success = await _resourceTypeService.UpdateResourceTypeAsync(id, updateDto);
-
-            if (!success)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
+            var resourceType = await _resourceTypeService.GetResourceTypeByIdAsync(id);
+            if (resourceType == null) return NotFound();
+            return View(resourceType);
         }
 
-        // DELETE: api/ResourceTypes/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        [HttpDelete("{id:guid}")] // Ograniczenie :guid
-        [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> DeleteResourceType(Guid id)
+        // POST: /ResourceTypes/Delete/{id}
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var success = await _resourceTypeService.DeleteResourceTypeAsync(id);
-
-            if (!success)
+            // PRO TIP: Check for dependencies before deletion
+            var resources = await _resourceService.GetAllResourcesAsync();
+            if (resources.Any(r => r.ResourceTypeId == id))
             {
-                return NotFound();
+                var resourceType = await _resourceTypeService.GetResourceTypeByIdAsync(id);
+                ModelState.AddModelError(string.Empty, "Nie można usunąć tego typu zasobu, ponieważ istnieją przypisane do niego zasoby. Usuń najpierw zasoby.");
+                return View(resourceType);
             }
 
-            return NoContent();
+            await _resourceTypeService.DeleteResourceTypeAsync(id);
+            return RedirectToAction(nameof(Index));
         }
     }
 }

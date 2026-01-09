@@ -41,6 +41,10 @@ namespace Infrastructure.Persistence.Repositories
             {
                 existingResource.Name = resource.Name;
                 existingResource.Description = resource.Description;
+                existingResource.Location = resource.Location;
+                existingResource.Capacity = resource.Capacity;
+                existingResource.IsActive = resource.IsActive;
+                existingResource.ImagePath = resource.ImagePath;
                 existingResource.ResourceTypeId = resource.ResourceTypeId;
                 await _dbContext.SaveChangesAsync();
             }

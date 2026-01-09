@@ -13,4 +13,5 @@ public class Booking
     public required Resource Resource { get; set; }
     public required User User { get; set; }
     public string? Notes { get; set; }
+    public Guid? RecurrenceGroupId { get; set; } // For recurring bookings
 }
