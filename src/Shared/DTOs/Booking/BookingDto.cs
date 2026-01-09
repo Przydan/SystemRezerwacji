@@ -11,5 +11,6 @@ namespace Shared.DTOs.Booking
         public string? UserName { get; set; }
         public Guid UserId { get; set; }
         public Guid ResourceId { get; set; }
+        public Guid? RecurrenceGroupId { get; set; }
     }
 }

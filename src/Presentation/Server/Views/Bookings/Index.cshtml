@@ -1,0 +1,100 @@
+@model IEnumerable<Shared.DTOs.Booking.BookingDto>
+
+@{
+    ViewData["Title"] = "Moje Rezerwacje";
+}
+
+<h1>Moje Rezerwacje</h1>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <a asp-action="Create" class="btn btn-primary">Nowa Rezerwacja</a>
+        <a asp-action="Calendar" class="btn btn-info text-white ms-2">Widok Kalendarza</a>
+    </div>
+    <div class="col-md-8">
+        <form asp-action="Index" method="get" class="row g-2">
+            <div class="col-auto">
+                 <select name="statusFilter" class="form-select" asp-items="ViewBag.Statuses">
+                    <option value="">-- Status --</option>
+                </select>
+            </div>
+             <div class="col-auto">
+                 <select name="resourceIdFilter" class="form-select" asp-items="ViewBag.Resources">
+                    <option value="">-- Zasób --</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Szukaj..." />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-success">Szukaj</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">X</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["ResourceSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]">
+                    Zasób
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]">
+                    Początek
+                </a>
+            </th>
+            <th>
+                Koniec
+            </th>
+            <th>
+                 <a asp-action="Index" asp-route-sortOrder="@ViewData["StatusSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]">
+                    Status
+                </a>
+            </th>
+            <th>
+                Uwagi
+            </th>
+            <th>
+                Akcje
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.ResourceName)
+            </td>
+            <td>
+                @item.StartTime.ToLocalTime().ToString("g")
+            </td>
+            <td>
+                @item.EndTime.ToLocalTime().ToString("g")
+            </td>
+            <td>
+                @item.Status
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Notes)
+            </td>
+            <td>
+                @if (item.Status != "CancelledByUser" && item.Status != "CancelledByAdmin")
+                {
+                    <div class="btn-group" role="group">
+                        <a asp-action="ExportToIcs" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Dodaj do kalendarza">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                        </a>
+                        <form asp-action="Cancel" asp-route-id="@item.Id" asp-route-returnUrl="@Context.Request.Path" method="post" onsubmit="return confirm('Czy na pewno chcesz anulować tę rezerwację?');" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-xmark"></i></button>
+                        </form>
+                    </div>
+                }
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

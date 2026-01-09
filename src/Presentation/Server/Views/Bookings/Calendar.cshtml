@@ -1,0 +1,96 @@
+@model IEnumerable<Shared.DTOs.Booking.BookingDto>
+
+@{
+    ViewData["Title"] = "Kalendarz Rezerwacji";
+}
+
+<h1>Kalendarz Rezerwacji</h1>
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-secondary">Powrót do Listy</a>
+    @if (User.IsInRole("Administrator"))
+    {
+        <a asp-action="AdminIndex" class="btn btn-secondary">Powrót do Listy Admina</a>
+    }
+</div>
+
+<div id='calendar'></div>
+
+<!-- FullCalendar CSS -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
+
+@section Scripts {
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                locale: 'pl', // Polish locale
+                editable: true, 
+                selectable: true,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                buttonText: {
+                    today:    'Dziś',
+                    month:    'Miesiąc',
+                    week:     'Tydzień',
+                    day:      'Dzień',
+                    list:     'Lista'
+                },
+                slotMinTime: '06:00:00', // Start view at 6 AM
+                slotMaxTime: '22:00:00', // End view at 10 PM
+                allDaySlot: false,
+                events: '/Bookings/GetCalendarEvents',
+                eventClick: function(info) {
+                    alert('Rezerwacja: ' + info.event.title + '\nOpis: ' + (info.event.extendedProps.description || 'Brak uwag'));
+                },
+                eventDrop: function(info) {
+                    updateBooking(info);
+                },
+                eventResize: function(info) {
+                    updateBooking(info);
+                }
+            });
+            calendar.render();
+
+            function updateBooking(info) {
+                var event = info.event;
+                // FullCalendar might not return end date if not explicitly set during resize, defaults to start + duration
+                // We should ensure we have valid ISO strings per API expectation
+                var endStr = event.end ? event.end.toISOString() : null;
+                
+                // If end is null (happens sometimes in drag), calculate it? 
+                // In timeGrid, dropped event has end. In month view, might be null.
+                // Safest to rely on event.end being correct for timeGrid.
+                
+                var data = {
+                    Id: event.id,
+                    Start: event.start.toISOString(),
+                    End: endStr
+                };
+
+                fetch('/Bookings/UpdateBookingTime', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                       return response.text().then(text => { throw new Error(text || 'Conflict'); });
+                    }
+                    // Success (Toast or silent?)
+                    console.log('Zaktualizowano termin.');
+                })
+                .catch(error => {
+                    alert('Nie można zmienić terminu: ' + error.message);
+                    info.revert();
+                });
+            }
+        });
+    </script>
+}

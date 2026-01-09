@@ -1,0 +1,73 @@
+@using Shared.DTOs.Resource
+@model UpdateResourceRequestDto
+
+@{
+    ViewData["Title"] = "Edytuj Zasób";
+}
+
+<h1>Edytuj Zasób</h1>
+
+<h4>Zasób</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="ImagePath" />
+            
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="control-label">Nazwa</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Description" class="control-label">Opis</label>
+                <textarea asp-for="Description" class="form-control"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ResourceTypeId" class="control-label">Typ Zasobu</label>
+                <select asp-for="ResourceTypeId" class="form-control" asp-items="@(new SelectList(ViewBag.ResourceTypes, "Id", "Name"))">
+                    <option value="">-- Wybierz Typ --</option>
+                </select>
+                <span asp-validation-for="ResourceTypeId" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Capacity" class="control-label">Pojemność</label>
+                <input asp-for="Capacity" class="form-control" />
+                <span asp-validation-for="Capacity" class="text-danger"></span>
+            </div>
+            
+             <div class="form-group mb-3">
+                <label asp-for="Image" class="control-label">Zmień Zdjęcie</label>
+                <input asp-for="Image" class="form-control" type="file" />
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <div class="mt-2">
+                        <img src="@Model.ImagePath" alt="Aktualne zdjęcie" style="max-height: 100px; max-width: 100%;" />
+                    </div>
+                }
+                <span asp-validation-for="Image" class="text-danger"></span>
+            </div>
+
+            <div class="form-group form-check mb-3">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <input type="submit" value="Zapisz" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Powrót</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
