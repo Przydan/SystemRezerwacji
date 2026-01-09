@@ -1,0 +1,19 @@
+@model SystemRezerwacji.Server.ViewModels.ErrorViewModel
+@{
+    ViewData["Title"] = "Błąd";
+}
+
+<h1 class="text-danger">Błąd.</h1>
+<h2 class="text-danger">Wystąpił błąd podczas przetwarzania Twojego żądania.</h2>
+
+@if (Model.ShowRequestId)
+{
+    <p>
+        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+    </p>
+}
+
+<p>
+    <strong>Tryb deweloperski</strong>
+    Należy go włączyć tylko w środowisku lokalnym, gdyż wyświetla szczegóły wyjątków.
+</p>

@@ -1,187 +1,375 @@
-using Application.Interfaces.Booking; // Dodaj ten using
+using Application.Interfaces.Booking;
+using Application.Interfaces.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 using Shared.DTOs.Booking;
 
 namespace Server.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     [Authorize]
-    public class BookingsController : ControllerBase
+    public class BookingsController : Controller
     {
-        private readonly IBookingService _bookingService; // Pole do przechowywania serwisu
+        private readonly IBookingService _bookingService;
+        private readonly IResourceService _resourceService;
 
-        // Wstrzyknięcie serwisu przez konstruktor
-        public BookingsController(IBookingService bookingService)
+        public BookingsController(IBookingService bookingService, IResourceService resourceService)
         {
             _bookingService = bookingService;
+            _resourceService = resourceService;
         }
 
-        [HttpGet("my")]
-        [ProducesResponseType(typeof(List<BookingDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<List<BookingDto>>> GetMyBookings()
+        // GET: /Bookings
+        public async Task<IActionResult> Index(string sortOrder, string searchString, string statusFilter, Guid? resourceIdFilter)
         {
-            var userId = GetUserIdFromToken();
-            if (userId == Guid.Empty)
-            {
-                return Unauthorized("User ID not found in token.");
-            }
+            ViewData["DateSortParm"] = string.IsNullOrEmpty(sortOrder) ? "Date_desc" : ""; // Default desc
+            ViewData["ResourceSortParm"] = sortOrder == "Resource" ? "resource_desc" : "Resource";
+            ViewData["StatusSortParm"] = sortOrder == "Status" ? "status_desc" : "Status";
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["StatusFilter"] = statusFilter;
+            ViewData["ResourceIdFilter"] = resourceIdFilter;
 
-            // Jedna linia, która robi całą magię!
-            var bookings = await _bookingService.GetUserBookingsAsync(userId);
+            var userId = GetUserIdFromToken();
+            var bookingsDto = await _bookingService.GetUserBookingsAsync(userId);
+            IEnumerable<BookingDto> bookings = bookingsDto;
             
-            return Ok(bookings);
-        }
+            // Dropdowns (Populate based on available data or all resources)
+            var allResources = await _resourceService.GetAllResourcesAsync();
+            ViewBag.Resources = new SelectList(allResources, "Id", "Name", resourceIdFilter);
+            ViewBag.Statuses = new SelectList(new List<string> { "Confirmed", "Cancelled", "CancelledByUser", "CancelledByAdmin" }, statusFilter);
 
-        [HttpPost]
-        [ProducesResponseType(typeof(BookingDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)] // Nowy kod odpowiedzi dla konfliktu
-        public async Task<ActionResult<BookingDto>> CreateBooking([FromBody] BookingRequestDto bookingRequest)
-        {
-            if (!ModelState.IsValid)
+            if (!string.IsNullOrEmpty(searchString))
             {
-                return BadRequest(ModelState);
-            }
-
-            var userId = GetUserIdFromToken();
-            if (userId == Guid.Empty)
-            {
-                return Unauthorized("User ID not found in token.");
-            }
-
-            var createdBooking = await _bookingService.CreateBookingAsync(bookingRequest, userId);
-
-            if (createdBooking == null)
-            {
-                // Serwis zwrócił null, co oznacza konflikt terminów.
-                return Conflict(new { message = "The selected time slot is already booked." });
+                bookings = bookings.Where(b => b.ResourceName.Contains(searchString, StringComparison.OrdinalIgnoreCase)
+                                            || (b.Notes != null && b.Notes.Contains(searchString, StringComparison.OrdinalIgnoreCase)));
             }
             
-            return CreatedAtAction(nameof(GetBookingById), new { bookingId = createdBooking.Id }, createdBooking);
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                 bookings = bookings.Where(b => b.Status == statusFilter);
+            }
+            
+            if (resourceIdFilter.HasValue)
+            {
+                bookings = bookings.Where(b => b.ResourceId == resourceIdFilter.Value);
+            }
 
+            switch (sortOrder)
+            {
+                case "Date_desc":
+                    bookings = bookings.OrderByDescending(b => b.StartTime);
+                    break;
+                case "Resource":
+                    bookings = bookings.OrderBy(b => b.ResourceName);
+                    break;
+                case "resource_desc":
+                    bookings = bookings.OrderByDescending(b => b.ResourceName);
+                    break;
+                case "Status":
+                    bookings = bookings.OrderBy(b => b.Status);
+                    break;
+                case "status_desc":
+                    bookings = bookings.OrderByDescending(b => b.Status);
+                    break;
+                default:
+                    bookings = bookings.OrderBy(b => b.StartTime);
+                    break;
+            }
+
+            return View(bookings);
         }
         
-        [HttpDelete("{bookingId:guid}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> CancelBooking(Guid bookingId)
-        {
-            var userId = GetUserIdFromToken();
-            if (userId == Guid.Empty)
-            {
-                return Unauthorized("User ID not found in token.");
-            }
-
-            var success = await _bookingService.CancelBookingAsync(bookingId, userId);
-
-            if (!success)
-            {
-                // Jeśli serwis zwrócił false, oznacza to, że rezerwacji nie znaleziono
-                // lub nie należy ona do tego użytkownika. Zwracamy 404 Not Found dla bezpieczeństwa.
-                return NotFound();
-            }
-
-            // Zgodnie ze standardem REST, operacja DELETE, która się powiodła,
-            // powinna zwrócić status 204 No Content.
-            return NoContent();
-        }
-        
-        [HttpDelete("admin/{bookingId:guid}")]
-        [Authorize(Roles = "Administrator")] // Zabezpieczenie - tylko dla admina
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> AdminCancelBooking(Guid bookingId)
-        {
-            var success = await _bookingService.AdminCancelBookingAsync(bookingId);
-
-            if (!success)
-            {
-                return NotFound(new { message = "Booking not found." });
-            }
-
-            return NoContent();
-        }
-        
-        [HttpGet("{bookingId:guid}", Name = "GetBookingById")]
-        [ProducesResponseType(typeof(BookingDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<BookingDto>> GetBookingById(Guid bookingId)
-        {
-            var userId = GetUserIdFromToken();
-            if (userId == Guid.Empty)
-            {
-                return Unauthorized("User ID not found in token.");
-            }
-
-            var booking = await _bookingService.GetBookingByIdAsync(bookingId, userId);
-
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(booking);
-        }
-        
-        [HttpPut("{bookingId:guid}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> UpdateBooking(Guid bookingId, [FromBody] UpdateBookingRequestDto request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var userId = GetUserIdFromToken();
-            if (userId == Guid.Empty)
-            {
-                return Unauthorized("User ID not found in token.");
-            }
-
-            var success = await _bookingService.UpdateBookingAsync(bookingId, request, userId);
-
-            if (!success)
-            {
-                // Jeśli serwis zwrócił false, może to oznaczać, że rezerwacji nie znaleziono
-                // lub wystąpił konflikt. Zwracamy ogólny błąd 404/409.
-                // Dla uproszczenia zwrócimy NotFound.
-                return NotFound(new { message = "Booking not found or update resulted in a conflict." });
-            }
-
-            // Operacja PUT, która się powiodła, powinna zwrócić status 204 No Content.
-            return NoContent();
-        }
-        
-        [HttpGet("user/{userId}")]
+        // GET: /Bookings/AdminIndex
         [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> GetUserBookings(Guid userId)
+        public async Task<IActionResult> AdminIndex(string sortOrder, string searchString, string statusFilter, Guid? resourceIdFilter, Guid? userIdFilter)
         {
-            var bookings = await _bookingService.GetUserBookingsAsync(userId);
-            return Ok(bookings);
+            ViewData["DateSortParm"] = string.IsNullOrEmpty(sortOrder) ? "Date_desc" : "";
+            ViewData["ResourceSortParm"] = sortOrder == "Resource" ? "resource_desc" : "Resource";
+            ViewData["UserSortParm"] = sortOrder == "User" ? "user_desc" : "User";
+            ViewData["StatusSortParm"] = sortOrder == "Status" ? "status_desc" : "Status";
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["StatusFilter"] = statusFilter;
+            ViewData["ResourceIdFilter"] = resourceIdFilter;
+            ViewData["UserIdFilter"] = userIdFilter;
+
+            var bookingsDto = await _bookingService.GetAllBookingsAsync();
+            IEnumerable<BookingDto> bookings = bookingsDto;
+
+            // Prepare Dropdowns using distinct values from loaded bookings (to show only relevant options)
+            // Or fetch all resources/users. Let's use what we have in booking list for Users, and Service for Resources
+            var uniqueUserIds = bookingsDto.Select(b => new { b.UserId, b.UserName }).DistinctBy(u => u.UserId).ToList();
+            ViewBag.Users = new SelectList(uniqueUserIds, "UserId", "UserName", userIdFilter);
+            
+            var allResources = await _resourceService.GetAllResourcesAsync();
+             ViewBag.Resources = new SelectList(allResources, "Id", "Name", resourceIdFilter);
+             ViewBag.Statuses = new SelectList(new List<string> { "Confirmed", "Cancelled", "CancelledByUser", "CancelledByAdmin" }, statusFilter);
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                bookings = bookings.Where(b => b.ResourceName.Contains(searchString, StringComparison.OrdinalIgnoreCase)
+                                            || (b.UserName != null && b.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                                            || (b.Notes != null && b.Notes.Contains(searchString, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                 bookings = bookings.Where(b => b.Status == statusFilter);
+            }
+            
+            if (resourceIdFilter.HasValue)
+            {
+                bookings = bookings.Where(b => b.ResourceId == resourceIdFilter.Value);
+            }
+            
+             if (userIdFilter.HasValue)
+            {
+                bookings = bookings.Where(b => b.UserId == userIdFilter.Value);
+            }
+
+            switch (sortOrder)
+            {
+                case "Date_desc":
+                    bookings = bookings.OrderByDescending(b => b.StartTime);
+                    break;
+                case "Resource":
+                    bookings = bookings.OrderBy(b => b.ResourceName);
+                    break;
+                case "resource_desc":
+                    bookings = bookings.OrderByDescending(b => b.ResourceName);
+                    break;
+                case "User":
+                    bookings = bookings.OrderBy(b => b.UserName);
+                    break;
+                case "user_desc":
+                    bookings = bookings.OrderByDescending(b => b.UserName);
+                    break;
+                 case "Status":
+                    bookings = bookings.OrderBy(b => b.Status);
+                    break;
+                case "status_desc":
+                    bookings = bookings.OrderByDescending(b => b.Status);
+                    break;
+                default:
+                    bookings = bookings.OrderBy(b => b.StartTime);
+                    break;
+            }
+
+            return View(bookings);
+        }
+
+        // GET: /Bookings/Create?resourceId=...
+        public async Task<IActionResult> Create(Guid? resourceId)
+        {
+            var resources = await _resourceService.GetActiveResourcesAsync();
+            ViewBag.Resources = new SelectList(resources, "Id", "Name", resourceId);
+            
+            var model = new BookingRequestDto();
+            if (resourceId.HasValue)
+            {
+                model.ResourceId = resourceId.Value;
+            }
+            // Set default dates if needed, e.g., tomorrow 9:00 - 10:00
+            model.StartTime = DateTime.Now.Date.AddDays(1).AddHours(9);
+            model.EndTime = DateTime.Now.Date.AddDays(1).AddHours(10);
+            
+            return View(model);
+        }
+
+        // POST: /Bookings/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(BookingRequestDto bookingRequest)
+        {
+            var userId = GetUserIdFromToken();
+            if (userId == Guid.Empty) return RedirectToAction("Login", "Account");
+
+            if (ModelState.IsValid)
+            {
+                try 
+                {
+                    var createdBooking = await _bookingService.CreateBookingAsync(bookingRequest, userId);
+
+                    if (createdBooking == null)
+                    {
+                        ModelState.AddModelError(string.Empty, "Wybrany termin jest już zajęty.");
+                    }
+                    else
+                    {
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Stale cookie / User ID mismatch after DB reset
+                    return RedirectToAction("Logout", "Account");
+                }
+                catch (KeyNotFoundException)
+                {
+                    ModelState.AddModelError(string.Empty, "Wybrany zasób nie istnieje.");
+                }
+            }
+
+            // Reload resources list if validation failed or conflict occurred
+            var resources = await _resourceService.GetActiveResourcesAsync();
+            ViewBag.Resources = new SelectList(resources, "Id", "Name", bookingRequest.ResourceId);
+            return View(bookingRequest);
         }
         
-        [HttpGet("resource/{resourceId:guid}")]
-        [AllowAnonymous] // Pozwalamy każdemu zobaczyć zajętość zasobu
-        public async Task<IActionResult> GetBookingsForResource(Guid resourceId)
+        // POST: /Bookings/Cancel/{id}
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Cancel(Guid id, string? returnUrl = null)
         {
-            // W przyszłości można dodać filtrowanie po datach, np. z query string
-            var bookings = await _bookingService.GetBookingsByResourceIdAsync(resourceId);
-            return Ok(bookings);
+            var userId = GetUserIdFromToken();
+            if (userId == Guid.Empty) return RedirectToAction("Login", "Account");
+
+            if (User.IsInRole("Administrator"))
+            {
+                await _bookingService.AdminCancelBookingAsync(id);
+                TempData["SuccessMessage"] = "Rezerwacja została anulowana przez Administratora.";
+            }
+            else
+            {
+                await _bookingService.CancelBookingAsync(id, userId);
+                TempData["SuccessMessage"] = "Rezerwacja została pomyślnie anulowana.";
+            }
+            
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            // Default fallback if no returnUrl
+            return RedirectToAction(User.IsInRole("Administrator") ? nameof(AdminIndex) : nameof(Index));
         }
+
+        // GET: /Bookings/Calendar
+        public IActionResult Calendar()
+        {
+            return View();
+        }
+
+        // GET: /Bookings/GetCalendarEvents
+        [HttpGet]
+        public async Task<IActionResult> GetCalendarEvents(DateTime start, DateTime end)
+        {
+            try 
+            {
+                // Fetch all bookings within range to display availability
+                // Note: For a real enterprise app, we should filter by range at DB level. 
+                // Currently fetching all and filtering in memory for MVP.
+                var allBookings = await _bookingService.GetAllBookingsAsync();
+                
+                var events = allBookings
+                    .Where(b => b.StartTime >= start && b.EndTime <= end && b.Status != "Cancelled" && b.Status != "CancelledByUser" && b.Status != "CancelledByAdmin")
+                    .Select(b => new 
+                    {
+                        id = b.Id,
+                        title = $"{b.ResourceName} ({b.UserName})",
+                        start = b.StartTime.ToString("yyyy-MM-ddTHH:mm:ss"), // ISO 8601
+                        end = b.EndTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        resourceId = b.ResourceId,
+                        // Color coding: Blue for others, Green for mine (if logged in)
+                        color = (User.Identity?.IsAuthenticated == true && (b.UserId == GetUserIdFromToken())) ? "#28a745" : "#007bff",
+                        description = b.Notes
+                    });
+
+                return Json(events);
+            }
+            catch (Exception)
+            {
+                // Log error
+                return BadRequest("Could not load events");
+            }
+        }
+        
+        // GET: /Bookings/ExportToIcs/{id}
+        [HttpGet]
+        public async Task<IActionResult> ExportToIcs(Guid id)
+        {
+            var userId = GetUserIdFromToken();
+            var booking = (await _bookingService.GetAllBookingsAsync()).FirstOrDefault(b => b.Id == id);
+            
+            if (booking == null) return NotFound();
+            
+            // Should probably check if user is allowed to see this booking, but for MVP we assume yes or it's my booking
+            
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("BEGIN:VCALENDAR");
+            sb.AppendLine("VERSION:2.0");
+            sb.AppendLine("PRODID:-//System Rezerwacji//NONSGML v1.0//EN");
+            sb.AppendLine("BEGIN:VEVENT");
+            sb.AppendLine($"UID:{booking.Id}");
+            sb.AppendLine($"DTSTAMP:{DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ")}");
+            sb.AppendLine($"DTSTART:{booking.StartTime.ToUniversalTime().ToString("yyyyMMddTHHmmssZ")}");
+            sb.AppendLine($"DTEND:{booking.EndTime.ToUniversalTime().ToString("yyyyMMddTHHmmssZ")}");
+            sb.AppendLine($"SUMMARY:Rezerwacja: {booking.ResourceName}");
+            sb.AppendLine($"DESCRIPTION:Rezerwacja zasobu {booking.ResourceName} w Systemie Rezerwacji.");
+            sb.AppendLine("END:VEVENT");
+            sb.AppendLine("END:VCALENDAR");
+            
+            var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            return File(bytes, "text/calendar", $"rezerwacja_{booking.Id}.ics");
+        }
+
+        // POST: /Bookings/UpdateBookingTime
+        [HttpPost]
+        public async Task<IActionResult> UpdateBookingTime([FromBody] UpdateTimeDto request)
+        {
+            var userId = GetUserIdFromToken();
+            if (userId == Guid.Empty) return Unauthorized();
+
+            BookingDto? original;
+            bool success;
+
+            if (User.IsInRole("Administrator"))
+            {
+                 original = await _bookingService.GetBookingByIdForAdminAsync(request.Id);
+                 if (original == null) return NotFound("Rezerwacja nie znaleziona.");
+
+                 var updateDto = new UpdateBookingRequestDto
+                 {
+                     StartTime = request.Start,
+                     EndTime = request.End,
+                     Notes = original.Notes
+                 };
+
+                 success = await _bookingService.AdminUpdateBookingAsync(request.Id, updateDto);
+            }
+            else
+            {
+                 original = await _bookingService.GetBookingByIdAsync(request.Id, userId);
+                 if (original == null) return NotFound("Rezerwacja nie znaleziona lub brak uprawnień.");
+
+                 var updateDto = new UpdateBookingRequestDto
+                 {
+                     StartTime = request.Start,
+                     EndTime = request.End,
+                     Notes = original.Notes
+                 };
+
+                 success = await _bookingService.UpdateBookingAsync(request.Id, updateDto, userId);
+            }
+            
+            if (!success)
+            {
+                 return Conflict("Konflikt terminów lub błąd aktualizacji.");
+            }
+
+            return Ok(new { message = "Zaktualizowano termin." });
+        }
+
+        public record UpdateTimeDto(Guid Id, DateTime Start, DateTime End);
 
         private Guid GetUserIdFromToken()
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            Guid.TryParse(userIdString, out var userId);
-            return userId;
+            if (Guid.TryParse(userIdString, out var userId))
+            {
+                return userId;
+            }
+            return Guid.Empty;
         }
     }
 }

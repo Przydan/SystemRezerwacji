@@ -1,0 +1,32 @@
+@model Shared.DTOs.Resource.ResourceTypeDto
+
+@{
+    ViewData["Title"] = "Usuń Typ Zasobu";
+}
+
+<h1>Usuń Typ Zasobu</h1>
+
+<h3>Czy na pewno chcesz usunąć ten typ?</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            Nazwa
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        <dt class = "col-sm-2">
+            Opis
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Description)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="submit" value="Usuń" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-secondary">Powrót</a>
+    </form>
+</div>
