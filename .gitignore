@@ -7,3 +7,5 @@ riderModule.iml
 .vs/
 [Vv][Ss]/
 .idea
+src/Infrastructure/Infrastructure/Migrations/SystemRezerwacjiDbContextModelSnapshot.cs
+src/Infrastructure/Infrastructure/Migrations/*
