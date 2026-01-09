@@ -50,12 +50,19 @@ clone_repo() {
     
     if [ -d "$INSTALL_DIR" ]; then
         echo "  Katalog $INSTALL_DIR już istnieje."
-        read -p "  Czy chcesz go nadpisać? (t/n): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Tt]$ ]]; then
-            rm -rf "$INSTALL_DIR"
+        if [ -t 0 ]; then
+            # Interactive mode
+            read -p "  Czy chcesz go nadpisać? (t/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Tt]$ ]]; then
+                rm -rf "$INSTALL_DIR"
+            else
+                echo "  Używam istniejącej instalacji..."
+                return
+            fi
         else
-            echo "  Używam istniejącej instalacji..."
+            # Non-interactive mode - use existing
+            echo "  Tryb nieinteraktywny - używam istniejącej instalacji."
             return
         fi
     fi
@@ -70,13 +77,20 @@ configure() {
     
     cd "$INSTALL_DIR"
     
-    # Ask about test data
-    read -p "  Czy załadować dane testowe? (t/n) [t]: " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
-        SEED_TEST_DATA="false"
+    # Check if running interactively
+    if [ -t 0 ]; then
+        # Interactive mode - ask user
+        read -p "  Czy załadować dane testowe? (t/n) [t]: " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Nn]$ ]]; then
+            SEED_TEST_DATA="false"
+        else
+            SEED_TEST_DATA="true"
+        fi
     else
-        SEED_TEST_DATA="true"
+        # Non-interactive mode (curl | bash) - use default or env var
+        echo "  Tryb nieinteraktywny - używam domyślnych ustawień."
+        SEED_TEST_DATA="${SEED_TEST_DATA:-true}"
     fi
     
     echo -e "${GREEN}✓ Dane testowe: $SEED_TEST_DATA${NC}"
