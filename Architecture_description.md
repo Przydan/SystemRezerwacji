@@ -1,6 +1,6 @@
 # System Rezerwacji – Architecture Description
 
-**Version:** 3.1  
+**Version:** 3.2  
 **Date of modification:** 09.01.2026  
 **Authors:** Patryk Przydanek, Leon Stolecki, Kacper Dombrowicz  
 **Refactored by:** Antigravity Agent
@@ -8,7 +8,7 @@
 ---
 
 ## 1. Document Goal
-This document describes the **current architectural state** of the "System Rezerwacji" (Reservation System) after the v3.1 refactoring phase. The system has evolved from a basic MVC setup to a robust, layered Clean Architecture solution, incorporating modern UI/UX features like Dark Mode, Interactive Calendar, and Recurring Bookings.
+This document describes the **current architectural state** of the "System Rezerwacji" (Reservation System) after the v3.2 refactoring phase. The system has evolved from a basic MVC setup to a robust, layered Clean Architecture solution, incorporating modern UI/UX features like Dark Mode, Interactive Calendar, Recurring Bookings, and **Docker containerization with one-command installation**.
 
 ---
 
@@ -42,9 +42,38 @@ This document describes the **current architectural state** of the "System Rezer
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+## 4. Deployment Architecture (Docker)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     HOST (Linux/Windows)                        │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                 docker-compose.yml                        │  │
+│  │  ┌─────────────────────┐    ┌─────────────────────────┐   │  │
+│  │  │   app (ASP.NET)     │───▶│   db (SQL Server 2022)  │   │  │
+│  │  │   Port: 8080        │    │   Port: 1433            │   │  │
+│  │  │   Env: SeedTestData │    │   Volume: mssql_data    │   │  │
+│  │  └─────────────────────┘    └─────────────────────────┘   │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Installation Methods
+| Method | Command |
+|--------|----------|
+| **One-command** | `curl -fsSL https://raw.githubusercontent.com/Przydan/SystemRezerwacji/master/install.sh \| bash` |
+| **Manual Docker** | `docker compose up --build` |
+| **Local (Dev)** | `dotnet run --project src/Presentation/Server/Server.csproj` |
+
+### Environment Variables
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SEED_TEST_DATA` | `true` | Load sample users, resources, and bookings |
+| `ConnectionStrings__DefaultConnection` | (docker) | SQL Server connection string |
+
 ---
 
-## 4. Key Features (Current State v3.1)
+## 5. Key Features (Current State v3.2)
 
 ### 4.1 Booking Module
 - **CRUD Operations:** Create, View, Cancel bookings.
@@ -110,7 +139,8 @@ This document describes the **current architectural state** of the "System Rezer
 
 ---
 
-## 8. Future Roadmap (Planned)
+## 9. Future Roadmap (Planned)
 - [ ] Series Editing (Edit all bookings in a recurring series at once).
 - [ ] Email Notifications via SMTP (currently saved to file for development).
 - [ ] API Layer for Mobile/External integrations.
+- [ ] Kubernetes Deployment manifests.
