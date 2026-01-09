@@ -6,6 +6,7 @@ public interface IResourceService
 {
     Task<ResourceDto?> GetResourceByIdAsync(Guid id);
     Task<List<ResourceDto>> GetAllResourcesAsync();
+    Task<List<ResourceDto>> GetActiveResourcesAsync();
     Task<ResourceDto> CreateResourceAsync(CreateResourceRequestDto createDto);
     Task<bool> UpdateResourceAsync(Guid id, UpdateResourceRequestDto updateDto);
     Task<bool> DeleteResourceAsync(Guid id);

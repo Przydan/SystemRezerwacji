@@ -1,0 +1,110 @@
+@model Shared.DTOs.Resource.CreateResourceTypeRequestDto
+
+@{
+    ViewData["Title"] = "Utwórz Typ Zasobu";
+    // Define available icons
+    var icons = new[] 
+    { 
+        new { Class = "fa-solid fa-chair", Name = "Biurko" },
+        new { Class = "fa-solid fa-building", Name = "Sala" },
+        new { Class = "fa-solid fa-desktop", Name = "Komputer" },
+        new { Class = "fa-solid fa-square-parking", Name = "Parking" },
+        new { Class = "fa-solid fa-video", Name = "Projektor" },
+        new { Class = "fa-solid fa-utensils", Name = "Kuchnia" },
+        new { Class = "fa-solid fa-couch", Name = "Strefa Relaksu" }
+    };
+}
+
+<style>
+    .icon-option {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .icon-option:hover {
+        background-color: #f8f9fa;
+        border-color: #adb5bd;
+    }
+    .icon-option.selected {
+        background-color: #e7f1ff;
+        border-color: #0d6efd;
+        color: #0d6efd;
+        font-weight: bold;
+    }
+    .icon-option i {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+    }
+    .radio-hidden {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+</style>
+
+<h1>Utwórz Typ Zasobu</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="control-label">Nazwa</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Description" class="control-label">Opis</label>
+                <input asp-for="Description" class="form-control" />
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="control-label">Wybierz Ikonę</label>
+                <input type="hidden" asp-for="IconCssClass" id="IconCssClassInput" />
+                <div class="row g-2">
+                    @foreach (var icon in icons)
+                    {
+                        <div class="col-3 col-sm-2">
+                            <label class="icon-option" onclick="selectIcon('@icon.Class', this)">
+                                <i class="@icon.Class"></i>
+                                <span style="font-size: 0.7rem;">@icon.Name</span>
+                                <input type="radio" name="icon_radio" value="@icon.Class" class="radio-hidden" />
+                            </label>
+                        </div>
+                    }
+                </div>
+                <span asp-validation-for="IconCssClass" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mt-4">
+                <input type="submit" value="Utwórz" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Powrót</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function selectIcon(iconClass, element) {
+            // Update hidden input
+            document.getElementById('IconCssClassInput').value = iconClass;
+            
+            // Update visual state
+            document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+    </script>
+}
