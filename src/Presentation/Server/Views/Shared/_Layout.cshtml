@@ -76,7 +76,7 @@
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Bookings" asp-action="AdminIndex">Wszystkie Rezerwacje</a>
                             </li>
                         }
-                        @if (User.Identity.IsAuthenticated)
+                        @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Bookings" asp-action="Index">Moje Rezerwacje</a>
@@ -136,7 +136,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2026 - System Rezerwacji - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - System Rezerwacji
         </div>
     </footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>

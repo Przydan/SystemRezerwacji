@@ -7,7 +7,7 @@ namespace Infrastructure.Persistence.Seed;
 
 public class IdentityDataSeeder
 {
-    public static async Task SeedRolesAndAdminUserAsync(IServiceProvider services)
+    public static async Task SeedRolesAndAdminUserAsync(IServiceProvider services, bool seedTestUsers = true)
     {
         var logger = services.GetRequiredService<ILogger<IdentityDataSeeder>>();
         try
@@ -74,39 +74,42 @@ public class IdentityDataSeeder
             
             
             // --- Seed 20 Test Users (Software House Staff) ---
-            // --- Seed Realistic Software House Staff ---
-            var personas = new[]
+            if (seedTestUsers)
             {
-                new { First = "Jan", Last = "Kowalski", Email = "jan.kowalski@x.pl", Role = "User", Note = "Senior Dev" },
-                new { First = "Anna", Last = "Nowak", Email = "anna.nowak@x.pl", Role = "User", Note = "Project Manager" },
-                new { First = "Piotr", Last = "Wiśniewski", Email = "piotr.wisniewski@x.pl", Role = "User", Note = "QA Lead" },
-                new { First = "Katarzyna", Last = "Wójcik", Email = "katarzyna.wojcik@x.pl", Role = "User", Note = "UX Designer" },
-                new { First = "Michał", Last = "Lewandowski", Email = "michal.lewandowski@x.pl", Role = "User", Note = "DevOps" },
-                new { First = "Tomasz", Last = "Zieliński", Email = "tomasz.zielinski@x.pl", Role = "User", Note = "Backend Dev" },
-                new { First = "Magdalena", Last = "Kamińska", Email = "magdalena.kaminska@x.pl", Role = "User", Note = "Frontend Dev" },
-                new { First = "Paweł", Last = "Woźniak", Email = "pawel.wozniak@x.pl", Role = "User", Note = "Mobile Dev" },
-                new { First = "Agnieszka", Last = "Dąbrowska", Email = "agnieszka.dabrowska@x.pl", Role = "User", Note = "HR Manager" },
-                new { First = "Krzysztof", Last = "Jankowski", Email = "krzysztof.jankowski@x.pl", Role = "Administrator", Note = "CTO" }
-            };
-
-            foreach (var p in personas)
-            {
-                if (await userManager.FindByEmailAsync(p.Email) == null)
+                // --- Seed Realistic Software House Staff ---
+                var personas = new[]
                 {
-                    var user = new User
+                    new { First = "Jan", Last = "Kowalski", Email = "jan.kowalski@x.pl", Role = "User", Note = "Senior Dev" },
+                    new { First = "Anna", Last = "Nowak", Email = "anna.nowak@x.pl", Role = "User", Note = "Project Manager" },
+                    new { First = "Piotr", Last = "Wiśniewski", Email = "piotr.wisniewski@x.pl", Role = "User", Note = "QA Lead" },
+                    new { First = "Katarzyna", Last = "Wójcik", Email = "katarzyna.wojcik@x.pl", Role = "User", Note = "UX Designer" },
+                    new { First = "Michał", Last = "Lewandowski", Email = "michal.lewandowski@x.pl", Role = "User", Note = "DevOps" },
+                    new { First = "Tomasz", Last = "Zieliński", Email = "tomasz.zielinski@x.pl", Role = "User", Note = "Backend Dev" },
+                    new { First = "Magdalena", Last = "Kamińska", Email = "magdalena.kaminska@x.pl", Role = "User", Note = "Frontend Dev" },
+                    new { First = "Paweł", Last = "Woźniak", Email = "pawel.wozniak@x.pl", Role = "User", Note = "Mobile Dev" },
+                    new { First = "Agnieszka", Last = "Dąbrowska", Email = "agnieszka.dabrowska@x.pl", Role = "User", Note = "HR Manager" },
+                    new { First = "Krzysztof", Last = "Jankowski", Email = "krzysztof.jankowski@x.pl", Role = "Administrator", Note = "CTO" }
+                };
+    
+                foreach (var p in personas)
+                {
+                    if (await userManager.FindByEmailAsync(p.Email) == null)
                     {
-                        UserName = p.Email,
-                        Email = p.Email,
-                        FirstName = p.First,
-                        LastName = p.Last,
-                        EmailConfirmed = true
-                    };
-                    
-                    var result = await userManager.CreateAsync(user, "Pass1234!@#$");
-                    if (result.Succeeded)
-                    {
-                        await userManager.AddToRoleAsync(user, p.Role);
-                        logger.LogInformation($"Seeded User: {p.First} {p.Last} ({p.Note})");
+                        var user = new User
+                        {
+                            UserName = p.Email,
+                            Email = p.Email,
+                            FirstName = p.First,
+                            LastName = p.Last,
+                            EmailConfirmed = true
+                        };
+                        
+                        var result = await userManager.CreateAsync(user, "Pass1234!@#$");
+                        if (result.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(user, p.Role);
+                            logger.LogInformation($"Seeded User: {p.First} {p.Last} ({p.Note})");
+                        }
                     }
                 }
             }
