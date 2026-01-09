@@ -126,7 +126,7 @@ start_app() {
     echo ""
     echo "  Dane logowania administratora:"
     echo -e "    Email:    ${YELLOW}admin@x.pl${NC}"
-    echo -e "    Hasło:    ${YELLOW}Pass1234!\@#\$${NC}"
+    echo -e "    Hasło:    ${YELLOW}Pass1234!@#\$${NC}"
     echo ""
     echo "  Przydatne komendy:"
     echo "    Logi:      cd $INSTALL_DIR && docker compose logs -f"
