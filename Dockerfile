@@ -28,4 +28,4 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "SystemRezerwacji.Server.dll"]
+ENTRYPOINT ["dotnet", "Server.dll"]
