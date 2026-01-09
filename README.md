@@ -19,34 +19,60 @@
 
 ---
 
-## 🚀 Szybki Start
+## 🚀 Instalacja
 
-### Wymagania
-- **.NET 8 SDK**
-- **SQL Server** (LocalDB na Windows lub Docker)
-- **Visual Studio 2022** (lub `dotnet` CLI)
+### Metoda 1: Jedna komenda (zalecana)
 
-### Uruchomienie (CLI)
+```bash
+curl -fsSL https://raw.githubusercontent.com/Przydan/SystemRezerwacji/main/install.sh | bash
+```
+
+Skrypt automatycznie:
+- Sprawdzi wymagania (Docker, Docker Compose)
+- Pobierze repozytorium
+- Zbuduje i uruchomi aplikację
+
+### Metoda 2: Ręczna instalacja Docker
 
 ```bash
 # 1. Klonowanie repozytorium
 git clone https://github.com/Przydan/SystemRezerwacji.git
 cd SystemRezerwacji
 
-# 2. Migracja Bazy Danych
+# 2. Uruchomienie (z danymi testowymi)
+docker compose up --build
+
+# Lub bez danych testowych:
+SEED_TEST_DATA=false docker compose up --build
+```
+
+### Metoda 3: Lokalne uruchomienie (deweloperzy)
+
+**Wymagania:** .NET 8 SDK, SQL Server
+
+```bash
+git clone https://github.com/Przydan/SystemRezerwacji.git
+cd SystemRezerwacji
+
+# Migracja bazy danych
 dotnet ef database update \
   --project src/Infrastructure/Infrastructure/Infrastructure.csproj \
   --startup-project src/Presentation/Server/Server.csproj
 
-# 3. Uruchomienie Aplikacji
+# Uruchomienie
 dotnet run --project src/Presentation/Server/Server.csproj
 ```
 
-Aplikacja dostępna pod: `https://localhost:5031` lub `http://localhost:5030`
+### 🔗 Dostęp do aplikacji
 
-### Domyślne Konto Admina (po seedowaniu)
+| Metoda | URL |
+|--------|-----|
+| Docker | http://localhost:8080 |
+| Lokalna | https://localhost:5031 |
+
+### 🔑 Domyślne konto administratora
 - **Email:** `admin@x.pl`
-- **Hasło:** `Hasło123!`
+- **Hasło:** `Pass1234!@#$`
 
 ---
 
