@@ -7,8 +7,7 @@ riderModule.iml
 .vs/
 [Vv][Ss]/
 .idea
-src/Infrastructure/Persistence/Migrations/SystemRezerwacjiDbContextModelSnapshot.cs
-src/Infrastructure/Persistence/Migrations/*
+
 
 # IDE and OS files
 .DS_Store
