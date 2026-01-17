@@ -129,6 +129,7 @@ public class Program
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
         var configuration = services.GetRequiredService<IConfiguration>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
 
         // Read SeedTestData flag, default to true if not set
         bool seedTestData = configuration.GetValue<bool>("SeedTestData", true);
@@ -136,7 +137,26 @@ public class Program
         try
         {
             var context = services.GetRequiredService<SystemRezerwacjiDbContext>();
-            await context.Database.MigrateAsync();
+            
+            // Retry logic for Docker environments where DB might not be fully ready
+            const int maxRetries = 30;
+            const int delaySeconds = 2;
+            
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    logger.LogInformation("Próba połączenia z bazą danych ({Attempt}/{MaxRetries})...", attempt, maxRetries);
+                    await context.Database.MigrateAsync();
+                    logger.LogInformation("Migracja bazy danych zakończona pomyślnie.");
+                    break;
+                }
+                catch (Exception ex) when (attempt < maxRetries)
+                {
+                    logger.LogWarning("Nie można połączyć się z bazą danych. Ponowna próba za {Delay}s... ({Message})", delaySeconds, ex.Message);
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                }
+            }
 
             // Wywołaj wszystkie seedery, przekazując dostawcę usług
             // Identity (Roles & Admin) always runs, Test Users controlled by flag
@@ -151,14 +171,12 @@ public class Program
                 await Infrastructure.Persistence.Seed.ResourceSeeder.SeedResourcesAsync(context);
             
                 // Seed Bookings
-                var logger = services.GetRequiredService<ILogger<Program>>();
                 await Infrastructure.Persistence.Seed.BookingSeeder.SeedBookingsAsync(context, logger);
             }
         
         }
         catch (Exception ex)
         {
-            var logger = services.GetRequiredService<ILogger<Program>>();
             logger.LogError(ex, "Wystąpił błąd podczas seedowania bazy danych.");
         }
     }
