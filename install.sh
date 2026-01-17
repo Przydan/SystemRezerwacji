@@ -228,9 +228,33 @@ configure() {
     echo "  • Dane testowe: $SEED_TEST_DATA"
 }
 
+# Secure file permissions
+secure_permissions() {
+    echo -e "${YELLOW}[4/6] Zabezpieczanie uprawnień...${NC}"
+    
+    cd "$INSTALL_DIR"
+    
+    # Remove macOS artifacts
+    find . -name ".DS_Store" -type f -delete 2>/dev/null || true
+    echo -e "${GREEN}  ✓ Usunięto pliki .DS_Store${NC}"
+    
+    # Secure .env file (contains sensitive data)
+    if [ -f ".env" ]; then
+        chmod 600 .env
+        echo -e "${GREEN}  ✓ Zabezpieczono plik .env (chmod 600)${NC}"
+    fi
+    
+    # Ensure scripts are executable
+    if [ -f "install.sh" ]; then
+        chmod +x install.sh
+    fi
+    
+    echo -e "${GREEN}✓ Uprawnienia zabezpieczone${NC}"
+}
+
 # Start application
 start_app() {
-    echo -e "${YELLOW}[4/5] Uruchamianie aplikacji...${NC}"
+    echo -e "${YELLOW}[5/6] Uruchamianie aplikacji...${NC}"
     
     cd "$INSTALL_DIR"
     
@@ -257,7 +281,7 @@ start_app() {
 # Show final info
 show_info() {
     echo ""
-    echo -e "${YELLOW}[5/5] Gotowe!${NC}"
+    echo -e "${YELLOW}[6/6] Gotowe!${NC}"
     echo ""
     echo -e "${GREEN}╔═══════════════════════════════════════════════════════════╗${NC}"
     echo -e "${GREEN}║              Instalacja zakończona!                       ║${NC}"
@@ -282,6 +306,7 @@ main() {
     check_docker
     clone_repo
     configure
+    secure_permissions
     start_app
     show_info
 }
