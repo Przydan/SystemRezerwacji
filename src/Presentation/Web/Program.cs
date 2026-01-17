@@ -150,19 +150,6 @@ public class Program
                 try
                 {
                     logger.LogInformation("Próba połączenia z bazą danych ({Attempt}/{MaxRetries})...", attempt, maxRetries);
-                    
-                    try 
-                    {
-                        var pending = await context.Database.GetPendingMigrationsAsync();
-                        var applied = await context.Database.GetAppliedMigrationsAsync();
-                        logger.LogInformation("[DIAGNOSTIC] Pending Migrations ({Count}): {Migrations}", pending.Count(), string.Join(", ", pending));
-                        logger.LogInformation("[DIAGNOSTIC] Applied Migrations ({Count}): {Migrations}", applied.Count(), string.Join(", ", applied));
-                    } 
-                    catch (Exception diagEx) 
-                    {
-                         logger.LogWarning("Diagnostic check failed (expected if DB not ready): {Message}", diagEx.Message);
-                    }
-
                     await context.Database.MigrateAsync();
                     logger.LogInformation("Migracja bazy danych zakończona pomyślnie.");
                     break;
