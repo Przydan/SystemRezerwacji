@@ -47,8 +47,11 @@ public class Program
     {
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? $"Data Source={DefaultDbName}";
 
+        var assemblyName = typeof(SystemRezerwacjiDbContext).Assembly.GetName().Name;
+        Console.WriteLine($"[DEBUG] Using migrations assembly: {assemblyName}");
+        
         builder.Services.AddDbContext<SystemRezerwacjiDbContext>(options =>
-            options.UseSqlServer(connectionString, b => b.MigrationsAssembly("Infrastructure")));
+            options.UseSqlServer(connectionString, b => b.MigrationsAssembly(assemblyName)));
 
         builder.Services.AddIdentity<User, IdentityRole<Guid>>(ConfigureIdentityOptions)
             .AddEntityFrameworkStores<SystemRezerwacjiDbContext>()
