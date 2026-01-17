@@ -1,14 +1,14 @@
 # System Rezerwacji – Architecture Description
 
-**Version:** 3.2  
-**Date of modification:** 09.01.2026  
+**Version:** 3.3  
+**Date of modification:** 17.01.2026  
 **Authors:** Patryk Przydanek, Leon Stolecki, Kacper Dombrowicz  
 **Refactored by:** Antigravity Agent
 
 ---
 
 ## 1. Document Goal
-This document describes the **current architectural state** of the "System Rezerwacji" (Reservation System) after the v3.2 refactoring phase. The system has evolved from a basic MVC setup to a robust, layered Clean Architecture solution, incorporating modern UI/UX features like Dark Mode, Interactive Calendar, Recurring Bookings, and **Docker containerization with one-command installation**.
+This document describes the **current architectural state** of the "System Rezerwacji" (Reservation System) after the v3.3 refactoring phase. The system is a monolithic MVC application following Clean Architecture principles, with Docker containerization and one-command installation.
 
 ---
 
@@ -25,22 +25,70 @@ This document describes the **current architectural state** of the "System Rezer
 
 ---
 
-## 3. Current Architecture (Clean Architecture)
+## 3. Project Structure (Clean Architecture)
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                     PRESENTATION LAYER                           │
-│  src/Presentation/Server (Controllers, Views, wwwroot)           │
-├──────────────────────────────────────────────────────────────────┤
-│                       CORE LAYER                                 │
-│  src/Core/Application (Services, Interfaces, DTOs, Mappings)     │
-│  src/Core/Domain (Entities: Booking, Resource, User)             │
-├──────────────────────────────────────────────────────────────────┤
-│                   INFRASTRUCTURE LAYER                           │
-│  src/Infrastructure (EF Core, SQL Server, Identity, Seeders)     │
-│  src/Shared (Shared DTOs used across layers)                     │
-└──────────────────────────────────────────────────────────────────┘
+SystemRezerwacji/
+├── src/
+│   ├── Core/                           # Business Logic (Framework-agnostic)
+│   │   ├── Application/                # Use cases, Interfaces, DTOs, Mappings
+│   │   │   ├── Interfaces/             # IBookingService, IResourceRepository, etc.
+│   │   │   ├── Services/               # ResourceService, ResourceTypeService
+│   │   │   └── Mappings/               # AutoMapper profiles
+│   │   └── Domain/                     # Entities & Enums
+│   │       ├── Entities/               # User, Booking, Resource, ResourceType
+│   │       └── Enums/                  # BookingStatus
+│   │
+│   ├── Infrastructure/                 # External Implementations
+│   │   ├── Persistence/                # EF Core
+│   │   │   ├── DbContext/              # SystemRezerwacjiDbContext
+│   │   │   ├── Repositories/           # ResourceRepository, ResourceTypeRepository
+│   │   │   ├── Migrations/             # EF Core migrations
+│   │   │   └── Seed/                   # IdentityDataSeeder, ResourceSeeder, etc.
+│   │   └── Services/                   # BookingService, FileEmailService
+│   │
+│   ├── Presentation/
+│   │   └── Web/                        # ASP.NET Core MVC Application
+│   │       ├── Controllers/            # AccountController, BookingsController, etc.
+│   │       ├── ViewModels/             # HomeViewModel, UserViewModel, ErrorViewModel
+│   │       ├── Views/                  # Razor views organized by controller
+│   │       ├── wwwroot/                # Static files (CSS, JS, images)
+│   │       └── Program.cs              # Application entry point & DI configuration
+│   │
+│   └── Shared/                         # Cross-cutting DTOs
+│       └── DTOs/                       # Auth/, Booking/, Resource/, User/
+│
+├── Dockerfile                          # Multi-stage Docker build
+├── docker-compose.yml                  # App + SQL Server containers
+├── install.sh                          # One-command installation script
+└── SystemRezerwacji.sln                # Solution file
 ```
+
+### Layer Dependencies
+
+```
+┌─────────────────────────────────────────────────┐
+│              Presentation (Web)                 │
+│         Controllers, Views, wwwroot             │
+└───────────────────┬─────────────────────────────┘
+                    │ depends on
+┌───────────────────▼─────────────────────────────┐
+│           Infrastructure                        │
+│   Persistence (EF Core), Services               │
+└───────────────────┬─────────────────────────────┘
+                    │ depends on
+┌───────────────────▼─────────────────────────────┐
+│                Core                             │
+│   Application (Interfaces, Services)            │
+│   Domain (Entities, Enums)                      │
+└─────────────────────────────────────────────────┘
+                    │ shared by all
+┌───────────────────▼─────────────────────────────┐
+│               Shared (DTOs)                     │
+└─────────────────────────────────────────────────┘
+```
+
+---
 
 ## 4. Deployment Architecture (Docker)
 
@@ -63,7 +111,7 @@ This document describes the **current architectural state** of the "System Rezer
 |--------|----------|
 | **One-command** | `curl -fsSL https://raw.githubusercontent.com/Przydan/SystemRezerwacji/master/install.sh \| bash` |
 | **Manual Docker** | `docker compose up --build` |
-| **Local (Dev)** | `dotnet run --project src/Presentation/Server/Server.csproj` |
+| **Local (Dev)** | `dotnet run --project src/Presentation/Web/Web.csproj` |
 
 ### Environment Variables
 | Variable | Default | Description |
@@ -73,74 +121,79 @@ This document describes the **current architectural state** of the "System Rezer
 
 ---
 
-## 5. Key Features (Current State v3.2)
+## 5. Key Features (Current State v3.3)
 
-### 4.1 Booking Module
+### 5.1 Booking Module
 - **CRUD Operations:** Create, View, Cancel bookings.
-- **Recurring Bookings:** Users can create Daily or Weekly recurring series (max 20 occurrences). The system validates all slots for conflicts before saving.
-- **Conflict Detection:** Prevents double-booking. Ignores cancelled (`CancelledByUser`, `CancelledByAdmin`) bookings.
-- **iCal Export:** Export individual bookings to `.ics` format for calendar apps.
+- **Recurring Bookings:** Daily or Weekly series (max 20 occurrences) with conflict validation.
+- **Conflict Detection:** Prevents double-booking. Ignores cancelled bookings.
+- **iCal Export:** Export bookings to `.ics` format.
 
-### 4.2 Interactive Calendar (FullCalendar.js)
+### 5.2 Interactive Calendar (FullCalendar.js)
 - **Calendar View:** Visual display of all bookings.
-- **Drag-and-Drop Rescheduling:** Users can drag their own bookings. Admins can drag any booking.
-- **Conflict Handling:** Server-side validation reverts invalid moves on the client.
+- **Drag-and-Drop Rescheduling:** Users drag own bookings; Admins drag any.
+- **Conflict Handling:** Server-side validation reverts invalid moves.
 
-### 4.3 Resource Management
-- **Soft Delete:** Resources are marked as inactive (`IsActive = false`) instead of hard-deleted, preserving booking history.
-- **Image Upload:** Admins can upload images for resources.
-- **Resource Types:** Categories with custom icons (FontAwesome icons).
+### 5.3 Resource Management
+- **Soft Delete:** Resources marked inactive instead of hard-deleted.
+- **Image Upload:** Admins upload images for resources.
+- **Resource Types:** Categories with FontAwesome icons.
 
-### 4.4 User Management (Admin Panel)
+### 5.4 User Management (Admin Panel)
 - **User List:** View all registered users.
 - **Role Management:** Toggle Administrator role.
-- **Account Lockout:** Toggle account lockout status.
+- **Account Lockout:** Toggle lockout status.
+- **Password Management:** Primary admin (`admin@x.pl`) can:
+  - Change own password
+  - Reset passwords of other users
 
-### 4.5 UI/UX Enhancements
-- **Dark Mode:** System-preference aware dark mode with manual toggle. Preference persisted in `localStorage`.
-- **Modern Design:** Gradient backgrounds, Glassmorphism cards, Inter font.
-- **Flash Messages:** Success/Error alerts for user actions.
-- **Sorting & Filtering:** All list views support sorting (by Resource, Date, Status) and filtering (by Status, Resource, User).
+### 5.5 UI/UX Enhancements
+- **Dark Mode:** System-preference aware with manual toggle.
+- **Modern Design:** Gradient backgrounds, Glassmorphism, Inter font.
+- **Flash Messages:** Success/Error alerts.
+- **Sorting & Filtering:** All list views support sorting and filtering.
 
 ---
 
-## 5. Technology Stack (ADRs)
+## 6. Technology Stack
 
 | ID | Decision | Justification |
 |---|---|---|
-| ADR001 | **.NET 8.0 LTS** | Current LTS with C# 12 features, high performance, cross-platform. |
-| ADR002 | **SQL Server (Docker/LocalDB)** | ACID transactions, handle concurrent access. SQLite rejected due to locking issues. |
-| ADR003 | **Clean Architecture** | Separates business logic from UI/DB, enabling unit testing and future flexibility (e.g., API layer). |
-| ADR004 | **FullCalendar.js** | Industry-standard JS library for interactive calendars. |
-| ADR005 | **Bootstrap 5** | Rapid UI development with responsive grid and components. |
+| ADR001 | **.NET 8.0 LTS** | C# 12 features, high performance, cross-platform. |
+| ADR002 | **SQL Server (Docker)** | ACID transactions, concurrent access handling. |
+| ADR003 | **Clean Architecture** | Separates business logic from UI/DB. |
+| ADR004 | **FullCalendar.js** | Industry-standard interactive calendar. |
+| ADR005 | **Bootstrap 5** | Responsive UI components. |
+| ADR006 | **AutoMapper** | DTO-to-Entity mapping. |
 
 ---
 
-## 6. Security Considerations
+## 7. Security Considerations
 
 | Feature | Status |
 |---|---|
 | CSRF Protection | ✅ `[ValidateAntiForgeryToken]` on all POST actions. |
-| Role-Based Access | ✅ Admin-only controllers use `[Authorize(Roles = "Administrator")]`. |
+| Role-Based Access | ✅ Admin-only actions use `[Authorize(Roles = "Administrator")]`. |
 | File Upload Validation | ✅ Extension whitelist for image uploads. |
 | HSTS | ✅ Enabled in Production. |
-| Stale Cookie Handling | ✅ Redirects to Logout if user ID no longer exists after DB reset. |
+| Stale Cookie Handling | ✅ Redirects to Logout if user ID no longer exists. |
+| Password Reset | ✅ Only primary admin can reset other users' passwords. |
 
 ---
 
-## 7. Non-Functional Requirements (NFRs)
+## 8. Non-Functional Requirements (NFRs)
 
 | NFR | Implementation |
 |---|---|
-| **Performance** | Async/await everywhere. Index views support pagination-ready queries. |
-| **Data Integrity** | ACID transactions. Conflict checks before booking creation. |
-| **Portability** | Runs on Windows (LocalDB) and Linux (Docker SQL Server). |
-| **Maintainability** | Clean Architecture with extracted helper methods in services. |
+| **Performance** | Async/await everywhere. Pagination-ready queries. |
+| **Data Integrity** | ACID transactions. Conflict checks before booking. |
+| **Portability** | Runs on Windows/Linux via Docker. |
+| **Maintainability** | Clean Architecture with service layer abstraction. |
 
 ---
 
 ## 9. Future Roadmap (Planned)
-- [ ] Series Editing (Edit all bookings in a recurring series at once).
-- [ ] Email Notifications via SMTP (currently saved to file for development).
+- [ ] Series Editing (Edit all bookings in a recurring series).
+- [ ] Email Notifications via SMTP.
 - [ ] API Layer for Mobile/External integrations.
 - [ ] Kubernetes Deployment manifests.

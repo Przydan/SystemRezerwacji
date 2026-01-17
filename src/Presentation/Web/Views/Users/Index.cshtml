@@ -1,0 +1,92 @@
+@model IEnumerable<Web.ViewModels.UserViewModel>
+
+@{
+    ViewData["Title"] = "Zarządzanie Użytkownikami";
+    var isPrimaryAdmin = ViewBag.IsPrimaryAdmin as bool? ?? false;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Zarządzanie Użytkownikami</h1>
+    @if (isPrimaryAdmin)
+    {
+        <a asp-action="ChangePassword" class="btn btn-outline-primary">
+            <i class="fas fa-key me-1"></i>Zmień Swoje Hasło
+        </a>
+    }
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>
+                    @if (user.IsAdmin)
+                    {
+                        <span class="badge bg-danger">Administrator</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-primary">Użytkownik</span>
+                    }
+                </td>
+                <td>
+                    @if (user.IsLockedOut)
+                    {
+                        <span class="badge bg-warning text-dark">Zablokowany</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Aktywny</span>
+                    }
+                </td>
+                <td>
+                    <div class="d-flex gap-2 flex-wrap">
+                         @if (User.Identity?.Name != user.UserName) // Prevent self-lockout/demotion
+                         {
+                            <form asp-action="ToggleAdmin" method="post">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                @if (user.IsAdmin)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Zabierz Admina</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Zrób Adminem</button>
+                                }
+                            </form>
+
+                            <form asp-action="ToggleLockout" method="post">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                @if (user.IsLockedOut)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Odblokuj</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">Zablokuj</button>
+                                }
+                            </form>
+
+                            @if (isPrimaryAdmin)
+                            {
+                                <a asp-action="ResetPassword" asp-route-userId="@user.Id" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-key me-1"></i>Resetuj Hasło
+                                </a>
+                            }
+                         }
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
