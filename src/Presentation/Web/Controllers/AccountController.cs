@@ -27,12 +27,20 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: false, lockoutOnFailure: false);
+            // Security: Enable lockout on failure to prevent brute-force attacks
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: false, lockoutOnFailure: true);
             if (result.Succeeded)
             {
                 return RedirectToAction("Index", "Home");
             }
-            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            if (result.IsLockedOut)
+            {
+                ModelState.AddModelError(string.Empty, "Konto zostało tymczasowo zablokowane z powodu zbyt wielu nieudanych prób logowania. Spróbuj ponownie za kilka minut.");
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Nieprawidłowy email lub hasło.");
+            }
         }
         return View(model);
     }

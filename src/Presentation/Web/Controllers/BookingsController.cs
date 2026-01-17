@@ -235,7 +235,8 @@ namespace Web.Controllers
                 TempData["SuccessMessage"] = "Rezerwacja została pomyślnie anulowana.";
             }
             
-            if (!string.IsNullOrEmpty(returnUrl))
+            // Security: Prevent Open Redirect - only allow local URLs
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);
             }
@@ -293,7 +294,11 @@ namespace Web.Controllers
             
             if (booking == null) return NotFound();
             
-            // Should probably check if user is allowed to see this booking, but for MVP we assume yes or it's my booking
+            // Security: Only allow export of own bookings or if admin
+            if (booking.UserId != userId && !User.IsInRole("Administrator"))
+            {
+                return Forbid();
+            }
             
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("BEGIN:VCALENDAR");
