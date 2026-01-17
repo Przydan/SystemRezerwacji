@@ -48,7 +48,7 @@ public class Program
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? $"Data Source={DefaultDbName}";
 
         builder.Services.AddDbContext<SystemRezerwacjiDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseSqlServer(connectionString, b => b.MigrationsAssembly("Infrastructure")));
 
         builder.Services.AddIdentity<User, IdentityRole<Guid>>(ConfigureIdentityOptions)
             .AddEntityFrameworkStores<SystemRezerwacjiDbContext>()
