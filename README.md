@@ -87,7 +87,7 @@ src/
 │   └── Domain/        # Encje (Booking, Resource, User)
 ├── Infrastructure/    # EF Core, SQL Server, Identity, Seedery
 ├── Presentation/
-│   └── Server/        # ASP.NET MVC (Kontrolery, Widoki, wwwroot)
+│   └── Web/        # ASP.NET MVC (Kontrolery, Widoki, wwwroot)
 └── Shared/            # DTO współdzielone
 ```
 
