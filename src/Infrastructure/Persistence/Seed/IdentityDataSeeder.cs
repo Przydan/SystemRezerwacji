@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Domain.Entities;
@@ -7,9 +8,15 @@ namespace Infrastructure.Persistence.Seed;
 
 public class IdentityDataSeeder
 {
+    // Default admin credentials (can be overridden via environment variables)
+    private const string DefaultAdminEmail = "admin@x.pl";
+    private const string DefaultAdminPassword = "Pass1234!@#$";
+    
     public static async Task SeedRolesAndAdminUserAsync(IServiceProvider services, bool seedTestUsers = true)
     {
         var logger = services.GetRequiredService<ILogger<IdentityDataSeeder>>();
+        var configuration = services.GetRequiredService<IConfiguration>();
+        
         try
         {
             var userManager = services.GetRequiredService<UserManager<User>>();
@@ -35,8 +42,9 @@ public class IdentityDataSeeder
                 }
             }
             
-            var adminEmail = "admin@x.pl"; 
-            var adminPassword = "Pass1234!@#$"; 
+            // Read admin credentials from environment/config or use defaults
+            var adminEmail = configuration["AdminEmail"] ?? DefaultAdminEmail;
+            var adminPassword = configuration["AdminPassword"] ?? DefaultAdminPassword;
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)

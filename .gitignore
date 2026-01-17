@@ -13,3 +13,6 @@ src/Infrastructure/Persistence/Migrations/*
 # IDE and OS files
 .DS_Store
 *.csproj.user
+
+# Environment files with secrets
+.env
