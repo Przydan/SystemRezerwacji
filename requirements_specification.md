@@ -136,12 +136,22 @@ graph TD
     As a User, I can cancel my own booking. For this purpose, I click "Cancel" on the booking details. If it is not my booking, the system will hide this option.
 *   **B05: Reschedule (Drag & Drop)**
     As a User, I can reschedule my booking. For this purpose, I drag the event to a new time.
+*   **B06: Filter Resources**
+    As a User, I can filter the calendar view. For this purpose, I select a resource type (e.g., "Projector") from the dropdown. The calendar updates to show only relevant resources.
+*   **B07: Export to iCal**
+    As a User, I can export my bookings. For this purpose, I click the "iCal" button. The system generates an .ics file for me to import into Outlook or Google Calendar.
+*   **B08: View Booking History**
+    As a User, I can see a list of my own active and past bookings. For this purpose, I navigate to the "My Bookings" tab.
 
 #### Module C: Administration
 *   **C01: User Management**
     As an Admin, I can view and block users. For this purpose, I use the User List actions.
 *   **C02: Global Booking Management**
     As an Admin, I can cancel any booking. For this purpose, I use the cancel action on any user's booking.
+*   **C03: Toggle Admin Role**
+    As an Admin, I can promote a User to Admin (or demote). For this purpose, I toggle the "Is Admin" checkbox in the User List.
+*   **C04: Unlock User Account**
+    As an Admin, I can unlock a user account that was locked due to failed login attempts. For this purpose, I click "Unlock" next to the user's name.
 
 #### Module D: Resource Management
 *   **D01: Add Resource**
