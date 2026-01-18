@@ -1,7 +1,7 @@
 # System Rezerwacji - Requirements specification
 
 **Metryka:**
-*   **Version:** 1.0
+*   **Version:** 3.4
 *   **Date of creation:** 2026-01-18
 *   **Date last modified:** 2026-01-18
 *   **Authors:** AI Business Architect & Patryk Przydanek
