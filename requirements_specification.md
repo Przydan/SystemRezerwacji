@@ -4,7 +4,7 @@
 *   **Version:** 3.4
 *   **Date of creation:** 2026-01-18
 *   **Date last modified:** 2026-01-18
-*   **Authors:** AI Business Architect & Patryk Przydanek
+*   **Authors:** AI Business Architect & Patryk Przydanek & Leon Stolecki & Kacper Dombrowicz
 
 ## 1. General information
 
