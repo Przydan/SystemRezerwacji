@@ -30,22 +30,20 @@ Security is enforced through ASP.NET Core Identity with strict role-based access
 
 ## 2. Business processes
 
-### Process 1: Creating a Resource Booking
-A standard process where an employee reserves a specific room or desk for a defined time slot.
+### UC1. Creating a Resource Booking
+**Actors:** User (ACT-002)
+**Prerequisites:** User is logged in and is on the Calendar View.
+**Main scenario:**
+1.  User selects a specific Resource and a time slot (start/end) on the calendar.
+2.  System validates the availability of the resource (checking for conflicts).
+3.  User confirms the booking details (Title, Description, optional Recurrence).
+4.  System saves the booking in the database.
+5.  System displays a success message "Booking created" and renders the event on the calendar.
 
-**Use Case:**
-*   **Actor:** ACT-002 (Generic User)
-*   **Main Scenario:**
-    1.  User logs into the system.
-    2.  User navigates to the Calendar View.
-    3.  User selects a specific Resource and a time slot (start/end).
-    4.  System validates the availability of the resource.
-    5.  User confirms the booking.
-    6.  System saves the booking and displays success confirmation.
-*   **Alternative Scenario:**
-    4a. System detects a conflict (resource already booked).
-    4b. System displays an error message and refreshes the calendar view.
-    4c. User selects a different time slot or resource.
+**Alternative Scenario:**
+2a. System detects a conflict (resource already booked).
+2b. System displays an error message "Conflict detected".
+2c. User selects a different time slot or resource.
 
 ```mermaid
 sequenceDiagram
@@ -66,18 +64,15 @@ sequenceDiagram
     end
 ```
 
-### Process 2: Resource Management (Admin)
-The process of adding or updating company assets available for booking.
-
-**Use Case:**
-*   **Actor:** ACT-001 (Administrator)
-*   **Main Scenario:**
-    1.  Admin logs into the Admin Panel.
-    2.  Admin selects "Resources" tab.
-    3.  Admin clicks "Add New Resource".
-    4.  Admin fills in details (Name, Type, Description) and uploads an image.
-    5.  System saves the new resource to the database.
-    6.  Resource becomes immediately visible on the Calendar.
+### UC2. Resource Management
+**Actors:** Administrator (ACT-001)
+**Prerequisites:** Administrator is logged in and is on the Admin Panel > Resources tab.
+**Main scenario:**
+1.  Administrator chooses to add a new resource.
+2.  System presents a form to create a resource.
+3.  Administrator fills in details (Name, Type, Description) and uploads an image.
+4.  Administrator confirms creation.
+5.  System displays a message confirming that the resource has been added and it becomes visible in the list.
 
 ## 3. Actors
 
@@ -123,30 +118,38 @@ graph TD
 ### 6.2 Requirements
 
 #### Module A: Authentication & Authorization
-*   **REQ-A-001:** The system must allow users to log in using an email and password.
-*   **REQ-A-002:** The system must support role-based access control (Admin, User).
-*   **REQ-A-003:** The system must strictly deny access to Administration pages for non-admin users.
-*   **REQ-A-004:** The system must allow the Primary Admin to reset passwords for other users.
+*   **A01: Login**
+    As a User, I can log in to the system. For this purpose, I enter my email and password. If credentials are wrong, the system will show an error.
+*   **A02: Role Access**
+    As an Admin, I can access the Administration Panel. For this purpose, I click the Admin link. If I am not an Admin, the system will deny access (403 Forbidden).
+*   **A03: Password Reset**
+    As a Primary Admin, I can reset passwords for other users. For this purpose, I use the reset tool in the User List.
 
-#### Module B: User Booking (CRUD: Booking)
-*   **REQ-B-001:** (Read) Users must be able to view the calendar with all bookings for a specific day/week/month.
-*   **REQ-B-002:** (Create) Users must be able to create a new booking for a selected resource if the time slot is free.
-*   **REQ-B-003:** (Create) Users must be able to create recurring bookings (daily/weekly) for up to 20 occurrences.
-*   **REQ-B-004:** (Verify) The system must validate conflict detection before saving any booking (no overlaps allowed).
-*   **REQ-B-005:** (Delete) Users must be able to cancel (delete) ONLY their own bookings.
-*   **REQ-B-006:** (Update) Users must be able to Drag-and-Drop their own bookings to reschedule (updates time slot).
+#### Module B: User Booking
+*   **B01: View Calendar**
+    As a User, I can see the calendar of resources. For this purpose, I navigate to the main page.
+*   **B02: Create Booking**
+    As a User, I can create a new booking. For this purpose, I select a free time slot and confirm. If the slot is taken, the system will show a conflict error.
+*   **B03: Recurring Booking**
+    As a User, I can create a recurring booking. For this purpose, I select "Daily" or "Weekly" recurrence. If any instance conflicts, the system will validate accordingly.
+*   **B04: Cancel Booking**
+    As a User, I can cancel my own booking. For this purpose, I click "Cancel" on the booking details. If it is not my booking, the system will hide this option.
+*   **B05: Reschedule (Drag & Drop)**
+    As a User, I can reschedule my booking. For this purpose, I drag the event to a new time.
 
-#### Module C: Administration (CRUD: User/Booking)
-*   **REQ-C-001:** (Read) Admin must see a list of all registered users.
-*   **REQ-C-002:** (Update) Admin must be able to grant or revoke Administrator privileges.
-*   **REQ-C-003:** (Update) Admin must be able to lock/unlock user accounts.
-*   **REQ-C-004:** (Delete) Admin must be able to cancel ANY booking in the system.
+#### Module C: Administration
+*   **C01: User Management**
+    As an Admin, I can view and block users. For this purpose, I use the User List actions.
+*   **C02: Global Booking Management**
+    As an Admin, I can cancel any booking. For this purpose, I use the cancel action on any user's booking.
 
-#### Module D: Resource Management (CRUD: Resource)
-*   **REQ-D-001:** (Create) Admin must be able to add new resources with Name, Type, and optional Image.
-*   **REQ-D-002:** (Update) Admin must be able to edit resource details.
-*   **REQ-D-003:** (Delete/Soft Delete) Admin must be able to deactivate a resource so it no longer appears for new bookings but preserves history.
-*   **REQ-D-004:** (Read) Users and Admins can filter resources by Type (Room, Desk, etc.).
+#### Module D: Resource Management
+*   **D01: Add Resource**
+    As an Admin, I can add a new resource. For this purpose, I fill the resource form and upload an image.
+*   **D02: Edit Resource**
+    As an Admin, I can edit resource details. For this purpose, I select "Edit" on a resource.
+*   **D03: Deactivate Resource**
+    As an Admin, I can deactivate a resource. For this purpose, I use the soft-delete function so it disappears from the calendar.
 
 ### 6.3 Division into phases
 
@@ -180,6 +183,7 @@ graph TD
 ### Compatibility
 *   **NFR-COM-001:** The web interface must be fully functional on modern browsers: Chrome (last 2 versions), Firefox, Edge, Safari.
 *   **NFR-COM-002:** The UI must be responsive and usable on mobile devices (min. 375px width).
+*   **NFR-COM-003:** The system must support **Dark Mode**. It should automatically detect system preference and allow manual toggle. The preference must be saved in `localStorage` to persist between sessions (ref: `current_state.md`).
 
 ### Architecture / Technology
 *   **NFR-ARC-001:** The backend must be built using **ASP.NET Core 8** or newer.
