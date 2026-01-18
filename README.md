@@ -3,7 +3,7 @@
 **System zarządzania rezerwacjami zasobów firmowych** (sale konferencyjne, sprzęt, biurka).
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple)](https://dotnet.microsoft.com/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 
 ---
 
