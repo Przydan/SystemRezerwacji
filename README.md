@@ -117,11 +117,6 @@ Szczegóły: [Architecture_description.md](Architecture_description.md)
 | `Infrastructure/Services/` | Logika biznesowa (`BookingService`, `ResourceService`) |
 | `Infrastructure/Persistence/` | DbContext, Migracje, Seedery |
 
----
-
-## 📝 Licencja
-
-MIT License. Projekt edukacyjny.
 
 ---
 
