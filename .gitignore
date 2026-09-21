@@ -15,3 +15,11 @@ riderModule.iml
 
 # Environment files with secrets
 .env
+
+# Artefakty budowania i archiwa (dodane po czyszczeniu historii)
+*.zip
+*.dll
+*.exe
+*.pdb
+*.db-shm
+*.db-wal
